@@ -37,3 +37,7 @@ export const uniqId = () => {
   }
   return globalDataBase.uniqId();
 };
+
+export const dumpDb = () => {
+  console.log(JSON.stringify(globalDataBase));
+};

@@ -11,6 +11,7 @@ import {
 import { Session } from "@shared/session";
 import { User } from "@shared/user";
 import { selectContext } from "@utils/context";
+import { dumpDb } from "@db/index";
 
 interface SignInRequestBody {
   email: User["email"];
@@ -43,6 +44,9 @@ export const signIn: express.RequestHandler<
   const context = selectContext(request);
   context.author = author;
   context.session = session;
+  console.log("---------");
+  dumpDb();
+
   response.status(200).send({ sessionId: session.id });
 };
 

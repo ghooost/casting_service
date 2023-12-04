@@ -17,6 +17,7 @@ const coreFilterUsersByEmail = (inEmail: User["email"]) => {
 };
 
 const coreCreateUser = (data: Omit<User, "id">) => {
+  console.log("coreCreateUser", data);
   const email = normalizeEmail(data.email);
   const password = normalizeString(data.password);
   const isAdmin = normalizeBool(data.isAdmin);

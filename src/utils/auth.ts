@@ -129,12 +129,12 @@ export const checkAuthStuffWithCompany = <T extends FuncWithCompanyType>(
 ) => {
   return (
     author: MaybeUser,
-    company: MaybeCompany,
     ...args: Parameters<typeof fn>
   ): ReturnType<typeof fn> => {
+    const company = args[0];
     if (!company || !canManageStuffLevel(author, company)) {
       throw new ForbiddenError(forbidenMessage);
     }
-    return fn(company, ...args);
+    return fn(company, ...args.slice(1));
   };
 };

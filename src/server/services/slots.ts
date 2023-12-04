@@ -1,6 +1,6 @@
 import { uniqId } from "@db/index";
 import { Applicant } from "@shared/applicant";
-import { Casting, CastingSlotCondition, CastingSlot } from "@shared/casting";
+import { Casting, CastingSlot } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
@@ -18,11 +18,10 @@ const getSlotById = (casting: Casting, slotId: CastingSlot["id"]) => {
 
 const createSlot = (
   casting: Casting,
-  data: Omit<CastingSlot, "id" | "conditions" | "applicants">
+  data: Omit<CastingSlot, "id" | "applicants">
 ) => {
   const slot: CastingSlot = {
     ...data,
-    conditions: new Set<CastingSlotCondition>(),
     applicants: new Set<Applicant>(),
     id: uniqId(),
   };
@@ -32,12 +31,14 @@ const createSlot = (
 
 const updateSlot = (
   slot: CastingSlot,
-  data: Omit<CastingSlot, "id" | "conditions" | "applicants">
+  data: Omit<CastingSlot, "id" | "applicants">
 ) => {
   slot.numberOfApplicants = data.numberOfApplicants;
   slot.openAt = data.openAt;
   slot.startAt = data.startAt;
   slot.endAt = data.endAt;
+  slot.forMen = data.forMen;
+  slot.forWomen = data.forWomen;
   return slot;
 };
 

@@ -17,17 +17,12 @@ export interface CastingRole {
 export interface CastingSlot {
   id: ID;
   numberOfApplicants: number;
-  conditions: Set<CastingSlotCondition>;
+  forWomen: boolean;
+  forMen: boolean;
   startAt: Datetime;
   endAt: Datetime;
   openAt: number;
   applicants: Set<Applicant>;
-}
-
-export interface CastingSlotCondition {
-  id: ID;
-  title: string;
-  filterFn: (applicant: Applicant) => boolean;
 }
 
 const InputTypes = [

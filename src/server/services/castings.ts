@@ -43,7 +43,7 @@ const deleteCasting = (company: Company, casting: Casting) => {
   company.castings.delete(casting);
 };
 
-export const serviceCompanies = {
+export const serviceCastings = {
   getCastingList: checkAuthStuffWithCompany(getCastingList),
   getCastingById: checkAuthStuffWithCompany(getCastingById),
   createCasting: checkAuthStuffWithCompany(createCasting),

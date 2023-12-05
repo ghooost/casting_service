@@ -1,15 +1,14 @@
-import { uniqId } from "@db/index";
-import { Applicant } from "@shared/applicant";
+import { adapterSlots } from "@db/companies";
 import { Casting, CastingSlot } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
 const getSlotsList = (casting: Casting) => {
-  return Array.from(casting.slots);
+  return adapterSlots.filter(casting);
 };
 
 const getSlotById = (casting: Casting, slotId: CastingSlot["id"]) => {
-  const slot = Array.from(casting.slots).find(({ id }) => id === slotId);
+  const slot = adapterSlots.find(casting, slotId);
   if (!slot) {
     throw new NotFoundError();
   }
@@ -20,45 +19,24 @@ const createSlot = (
   casting: Casting,
   data: Omit<CastingSlot, "id" | "applicants">
 ) => {
-  const slot: CastingSlot = {
-    ...data,
-    applicants: new Set<Applicant>(),
-    id: uniqId(),
-  };
-  casting.slots.add(slot);
-  return slot;
+  return adapterSlots.add(casting, data);
 };
 
 const updateSlot = (
+  casting: Casting,
   slot: CastingSlot,
-  data: Omit<CastingSlot, "id" | "applicants">
+  data: Partial<Omit<CastingSlot, "id" | "applicants">>
 ) => {
-  slot.numberOfApplicants = data.numberOfApplicants;
-  slot.openAt = data.openAt;
-  slot.startAt = data.startAt;
-  slot.endAt = data.endAt;
-  slot.forMen = data.forMen;
-  slot.forWomen = data.forWomen;
+  adapterSlots.update(casting, slot.id, data);
   return slot;
 };
 
 const deleteSlot = (casting: Casting, slot: CastingSlot) => {
-  casting.slots.delete(slot);
+  adapterSlots.remove(casting, slot);
 };
 
 const reArrangeSlots = (casting: Casting, slotIds: CastingSlot["id"][]) => {
-  const dict: [CastingSlot["id"], CastingSlot][] = Array.from(
-    casting.slots
-  ).map((data) => [data.id, data]);
-  const slots = new Map<CastingSlot["id"], CastingSlot>(dict);
-  const newSlots = new Set<CastingSlot>();
-  for (const slotId of slotIds) {
-    const slot = slots.get(slotId);
-    if (slot) {
-      newSlots.add(slot);
-    }
-  }
-  casting.slots = newSlots;
+  adapterSlots.reArrange(casting, slotIds);
 };
 
 export const serviceCompanies = {

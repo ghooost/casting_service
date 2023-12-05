@@ -1,18 +1,19 @@
+import { adapterStuff } from "@db/companies";
 import { Company } from "@shared/company";
 import { User } from "@shared/user";
 import { checkAuthOwnerWithCompany } from "@utils/auth";
 
 const getStuffList = (company: Company) => {
-  return Array.from(company.stuff);
+  return adapterStuff.filter(company);
 };
 
 const addStuffToCompany = (company: Company, user: User) => {
-  company.stuff.add(user);
+  adapterStuff.link(company, user);
   return company;
 };
 
 const removeStuffFromCompany = (company: Company, user: User) => {
-  company.stuff.delete(user);
+  adapterStuff.unlink(company, user);
   return company;
 };
 

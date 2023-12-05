@@ -1,7 +1,5 @@
-import { v4 as uuidv4 } from "uuid";
-
-import { selectCollection } from "@db/index";
-import { MaybeSession, Session } from "src/shared/session";
+import { adapterSessions } from "@db/sessions";
+import { MaybeSession, Session } from "@shared/session";
 
 const SESSION_EXPIRATION_MS = 100000;
 
@@ -20,8 +18,7 @@ const getSessionById = (sessionId: Session["id"] | undefined) => {
   if (!sessionId) {
     return null;
   }
-  const sessionsCollection = selectCollection("sessions");
-  const session = sessionsCollection.get(sessionId);
+  const session = adapterSessions.find(sessionId);
   if (!session || !isValidSession(session)) {
     return null;
   }
@@ -32,24 +29,20 @@ const updateSession = (session: Session) => {
   if (!session || !isValidSession(session)) {
     return null;
   }
-  session.endTime = Date.now() + SESSION_EXPIRATION_MS;
-  return session;
+  return adapterSessions.update(session.id, {
+    endTime: Date.now() + SESSION_EXPIRATION_MS,
+  });
 };
 
 const createSession = (userId: Session["userId"]) => {
-  const session = {
-    id: uuidv4(),
+  return adapterSessions.add({
     userId,
     endTime: Date.now() + SESSION_EXPIRATION_MS,
-  };
-  const sessionsCollection = selectCollection("sessions");
-  sessionsCollection.set(session.id, session);
-  return session;
+  });
 };
 
 const deleteSession = (session: Session) => {
-  const sessionsCollection = selectCollection("sessions");
-  sessionsCollection.delete(session.id);
+  adapterSessions.remove(session);
 };
 
 export const serviceSessions = {

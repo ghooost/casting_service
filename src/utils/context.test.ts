@@ -4,7 +4,7 @@ import { selectContext } from "./context";
 
 import { Context, RequestWithContext } from "@shared/context";
 
-it("selectContext", () => {
+it("utils/selectContext", () => {
   const context: Context = {
     session: null,
     author: null,

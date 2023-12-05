@@ -1,14 +1,14 @@
-import { uniqId } from "@db/index";
+import { adapterRoles } from "@db/companies";
 import { Casting, CastingRole } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
 const getRolesList = (casting: Casting) => {
-  return Array.from(casting.roles);
+  return adapterRoles.filter(casting);
 };
 
 const getRoleById = (casting: Casting, roleId: CastingRole["id"]) => {
-  const role = Array.from(casting.roles).find(({ id }) => id === roleId);
+  const role = adapterRoles.find(casting, roleId);
   if (!role) {
     throw new NotFoundError();
   }
@@ -16,36 +16,23 @@ const getRoleById = (casting: Casting, roleId: CastingRole["id"]) => {
 };
 
 const createRole = (casting: Casting, data: Omit<CastingRole, "id">) => {
-  const role: CastingRole = {
-    id: uniqId(),
-    title: data.title,
-  };
-  casting.roles.add(role);
-  return role;
+  return adapterRoles.add(casting, data);
 };
 
-const updateRole = (role: CastingRole, data: Omit<CastingRole, "id">) => {
-  role.title = data.title;
-  return role;
+const updateRole = (
+  casting: Casting,
+  role: CastingRole,
+  data: Omit<CastingRole, "id">
+) => {
+  return adapterRoles.update(casting, role.id, data);
 };
 
 const deleteRole = (casting: Casting, role: CastingRole) => {
-  casting.roles.delete(role);
+  adapterRoles.remove(casting, role);
 };
 
 const reArrangeRoles = (casting: Casting, roleIds: CastingRole["id"][]) => {
-  const dict: [CastingRole["id"], CastingRole][] = Array.from(
-    casting.roles
-  ).map((data) => [data.id, data]);
-  const roles = new Map<CastingRole["id"], CastingRole>(dict);
-  const newRoles = new Set<CastingRole>();
-  for (const fieldId of roleIds) {
-    const role = roles.get(fieldId);
-    if (role) {
-      newRoles.add(role);
-    }
-  }
-  casting.roles = newRoles;
+  adapterRoles.reArrange(casting, roleIds);
 };
 
 export const serviceCompanies = {

@@ -5,9 +5,9 @@ import { User } from "./user";
 export interface Company {
   id: ID;
   title: string;
-  owners: Set<User>;
-  stuff: Set<User>;
-  castings: Set<Casting>;
+  owners: User[];
+  stuff: User[];
+  castings: Casting[];
 }
 
 export type CompanyMinData = Pick<Company, "id" | "title">;

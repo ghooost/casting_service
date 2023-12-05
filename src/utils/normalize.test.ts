@@ -9,7 +9,7 @@ import {
   trimWhitespaces,
 } from "./normalize";
 
-describe("normalize", () => {
+describe("utils/normalize", () => {
   it("trimWhitespaces", () => {
     expect(trimWhitespaces("  test")).toBe("test");
   });

@@ -1,14 +1,14 @@
-import { uniqId } from "@db/index";
+import { adapterFields } from "@db/companies";
 import { Casting, CastingField } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
 const getFieldsList = (casting: Casting) => {
-  return Array.from(casting.fields);
+  return adapterFields.filter(casting);
 };
 
 const getFieldById = (casting: Casting, fieldId: CastingField["id"]) => {
-  const field = Array.from(casting.fields).find(({ id }) => id === fieldId);
+  const field = adapterFields.find(casting, fieldId);
   if (!field) {
     throw new NotFoundError();
   }
@@ -16,38 +16,23 @@ const getFieldById = (casting: Casting, fieldId: CastingField["id"]) => {
 };
 
 const createField = (casting: Casting, data: Omit<CastingField, "id">) => {
-  const field: CastingField = {
-    ...data,
-    id: uniqId(),
-  };
-  casting.fields.add(field);
-  return field;
+  return adapterFields.add(casting, data);
 };
 
-const updateField = (field: CastingField, data: Omit<CastingField, "id">) => {
-  field.inputType = data.inputType;
-  field.isRequired = data.isRequired;
-  field.inputType = data.inputType;
-  return field;
+const updateField = (
+  casting: Casting,
+  field: CastingField,
+  data: Omit<CastingField, "id">
+) => {
+  return adapterFields.update(casting, field.id, data);
 };
 
 const deleteField = (casting: Casting, field: CastingField) => {
-  casting.fields.delete(field);
+  adapterFields.remove(casting, field);
 };
 
 const reArrangeFields = (casting: Casting, fieldIds: CastingField["id"][]) => {
-  const dict: [CastingField["id"], CastingField][] = Array.from(
-    casting.fields
-  ).map((data) => [data.id, data]);
-  const fields = new Map<CastingField["id"], CastingField>(dict);
-  const newFields = new Set<CastingField>();
-  for (const fieldId of fieldIds) {
-    const field = fields.get(fieldId);
-    if (field) {
-      newFields.add(field);
-    }
-  }
-  casting.fields = newFields;
+  adapterFields.reArrange(casting, fieldIds);
 };
 
 export const serviceCompanies = {

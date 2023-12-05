@@ -1,17 +1,15 @@
-import { uniqId } from "@db/index";
+import { adapterCastings } from "@db/companies";
 import { checkAuthStuffWithCompany } from "@utils/auth";
 import { Casting } from "src/shared/casting";
 import { Company } from "src/shared/company";
 import { NotFoundError } from "src/shared/error";
 
 const getCastingList = (company: Company) => {
-  return Array.from(company.castings);
+  return adapterCastings.filter(company);
 };
 
 const getCastingById = (company: Company, castingId: Casting["id"]) => {
-  const casting = Array.from(company.castings).find(
-    ({ id }) => id === castingId
-  );
+  const casting = adapterCastings.find(company, castingId);
   if (!casting) {
     throw new NotFoundError();
   }
@@ -19,28 +17,19 @@ const getCastingById = (company: Company, castingId: Casting["id"]) => {
 };
 
 const createCasting = (company: Company, data: Pick<Casting, "title">) => {
-  const casting: Casting = {
-    id: uniqId(),
-    title: data.title,
-    roles: new Set(),
-    slots: new Set(),
-    fields: new Set(),
-  };
-  company.castings.add(casting);
-  return casting;
+  return adapterCastings.add(company, data);
 };
 
 const updateCasting = (
-  _: Company,
+  company: Company,
   casting: Casting,
-  data: Pick<Casting, "title">
+  data: Partial<Casting>
 ) => {
-  casting.title = data.title;
-  return casting;
+  return adapterCastings.update(company, casting.id, data);
 };
 
 const deleteCasting = (company: Company, casting: Casting) => {
-  company.castings.delete(casting);
+  adapterCastings.remove(company, casting);
 };
 
 export const serviceCastings = {

@@ -4,9 +4,9 @@ import type { Datetime, ID } from "./core";
 export interface Casting {
   id: ID;
   title: string;
-  roles: Set<CastingRole>;
-  slots: Set<CastingSlot>;
-  fields: Set<CastingField>;
+  roles: CastingRole[];
+  slots: CastingSlot[];
+  fields: CastingField[];
 }
 
 export interface CastingRole {
@@ -17,12 +17,10 @@ export interface CastingRole {
 export interface CastingSlot {
   id: ID;
   numberOfApplicants: number;
-  forWomen: boolean;
-  forMen: boolean;
   startAt: Datetime;
   endAt: Datetime;
   openAt: number;
-  applicants: Set<Applicant>;
+  applicants: Applicant[];
 }
 
 const InputTypes = [

@@ -1,23 +1,24 @@
+import { adapterOwners } from "@db/companies";
 import { Company } from "@shared/company";
 import { User } from "@shared/user";
 import { checkAuthOwnerWithCompany } from "@utils/auth";
 
-const getOwnersList = (company: Company) => {
-  return Array.from(company.owners);
+const getOwnerList = (company: Company) => {
+  return adapterOwners.filter(company);
 };
 
 const addOwnerToCompany = (company: Company, user: User) => {
-  company.owners.add(user);
+  adapterOwners.link(company, user);
   return company;
 };
 
 const removeOwnerFromCompany = (company: Company, user: User) => {
-  company.owners.delete(user);
+  adapterOwners.unlink(company, user);
   return company;
 };
 
-export const serviceOwners = {
-  getOwnersList: checkAuthOwnerWithCompany(getOwnersList),
+export const serviceOwner = {
+  getOwnerList: checkAuthOwnerWithCompany(getOwnerList),
   addOwnerToCompany: checkAuthOwnerWithCompany(addOwnerToCompany),
   removeOwnerFromCompany: checkAuthOwnerWithCompany(removeOwnerFromCompany),
 };

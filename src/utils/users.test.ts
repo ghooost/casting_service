@@ -4,7 +4,7 @@ import { maskPrivateData } from "./users";
 
 import { User } from "@shared/user";
 
-describe("users", () => {
+describe("utils/users", () => {
   it("maskPrivateData", () => {
     const user: User = {
       id: 1,

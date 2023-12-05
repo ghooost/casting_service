@@ -1,4 +1,4 @@
-import { selectCollection, uniqId } from "@db/index";
+import { adapterUsers } from "@db/users";
 import { ForbiddenError, NotFoundError, ParamsError } from "@shared/error";
 import { MaybeUser, User } from "@shared/user";
 import { canManageServiceLevel, checkAuthAdmin } from "@utils/auth";
@@ -10,14 +10,10 @@ import {
 import { maskPrivateData } from "@utils/users";
 
 const coreFilterUsersByEmail = (inEmail: User["email"]) => {
-  const usersCollection = selectCollection("users");
-  return Array.from(usersCollection.values()).filter(
-    ({ email }) => email === inEmail
-  );
+  return adapterUsers.filter(({ email }) => email === inEmail);
 };
 
 const coreCreateUser = (data: Omit<User, "id">) => {
-  console.log("coreCreateUser", data);
   const email = normalizeEmail(data.email);
   const password = normalizeString(data.password);
   const isAdmin = normalizeBool(data.isAdmin);
@@ -28,20 +24,15 @@ const coreCreateUser = (data: Omit<User, "id">) => {
   if (users.length > 0) {
     throw new ParamsError("email already exists");
   }
-  const user = {
+  return adapterUsers.add({
     email,
     password,
     isAdmin,
-    id: uniqId(),
-  };
-  const usersCollection = selectCollection("users");
-  usersCollection.set(user.id, user);
-  return user;
+  });
 };
 
 const coreGetUserById = (userId: User["id"]) => {
-  const usersCollection = selectCollection("users");
-  return usersCollection.get(userId) ?? null;
+  return adapterUsers.find(userId);
 };
 
 const coreGetUserByEmail = (email: User["email"]) => {
@@ -56,16 +47,13 @@ const coreCreateInitialUserIfNoUsersAtAll = (
   email: User["email"],
   password: User["password"]
 ) => {
-  const usersCollection = selectCollection("users");
-  if (usersCollection.size > 0) {
-    return;
+  if (adapterUsers.isEmpty()) {
+    coreCreateUser({ email, password, isAdmin: true });
   }
-  coreCreateUser({ email, password, isAdmin: true });
 };
 
 const getUserList = () => {
-  const usersCollection = selectCollection("users");
-  return Array.from(usersCollection.values());
+  return adapterUsers.filter(() => true);
 };
 
 const createUser = (data: Omit<User, "id">) => {
@@ -73,13 +61,11 @@ const createUser = (data: Omit<User, "id">) => {
 };
 
 const deleteUser = (user: User) => {
-  const usersCollection = selectCollection("users");
-  usersCollection.delete(user.id);
+  adapterUsers.remove(user);
 };
 
 const getUserById = (author: MaybeUser, userId: User["id"]) => {
-  const usersCollection = selectCollection("users");
-  const user = usersCollection.get(userId);
+  const user = adapterUsers.find(userId);
   if (!user) {
     throw new NotFoundError();
   }
@@ -96,6 +82,7 @@ const updateUser = (author: MaybeUser, user: User, data: Omit<User, "id">) => {
   if (!canManageServiceLevel(author) && user !== author) {
     throw new ForbiddenError();
   }
+  const normData: Record<string, unknown> = {};
   const email = normalizeEmail(data.email);
   const password = normalizeString(data.password);
   const isAdmin = normalizeBool(data.isAdmin);
@@ -107,13 +94,13 @@ const updateUser = (author: MaybeUser, user: User, data: Omit<User, "id">) => {
     if (users.length > 0 && users[0].id !== user.id) {
       throw new ParamsError("email already exists");
     }
-    user.email = email;
+    normData.email = email;
   }
   if (password && user.password !== password) {
-    user.password = password;
+    normData.password = password;
   }
-  user.isAdmin = author.isAdmin ? isAdmin : false;
-  return maskPrivateData(user);
+  normData.isAdmin = author.isAdmin ? isAdmin : false;
+  return adapterUsers.update(user.id, normData);
 };
 
 export const serviceUsers = {

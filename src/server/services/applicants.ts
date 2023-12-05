@@ -1,17 +1,15 @@
-import { uniqId } from "@db/index";
+import { adapterApplicants } from "@db/companies";
 import { Applicant } from "@shared/applicant";
 import { CastingSlot } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
 const getApplicantsList = (slot: CastingSlot) => {
-  return Array.from(slot.applicants);
+  return adapterApplicants.filter(slot);
 };
 
 const getApplicantById = (slot: CastingSlot, applicantId: Applicant["id"]) => {
-  const applicant = Array.from(slot.applicants).find(
-    ({ id }) => id === applicantId
-  );
+  const applicant = adapterApplicants.find(slot, applicantId);
   if (!applicant) {
     throw new NotFoundError();
   }
@@ -19,21 +17,19 @@ const getApplicantById = (slot: CastingSlot, applicantId: Applicant["id"]) => {
 };
 
 const createApplicant = (slot: CastingSlot, data: Omit<Applicant, "id">) => {
-  const applicant: Applicant = {
-    ...data,
-    id: uniqId(),
-  };
-  slot.applicants.add(applicant);
-  return applicant;
+  return adapterApplicants.add(slot, data);
 };
 
-const updateApplicant = (applicant: Applicant, data: Omit<Applicant, "id">) => {
-  //TODO: apply chenges
-  return data;
+const updateApplicant = (
+  slot: CastingSlot,
+  applicant: Applicant,
+  data: Omit<Applicant, "id">
+) => {
+  return adapterApplicants.update(slot, applicant.id, data);
 };
 
 const deleteApplicant = (slot: CastingSlot, applicant: Applicant) => {
-  slot.applicants.delete(applicant);
+  adapterApplicants.remove(slot, applicant);
 };
 
 export const serviceCompanies = {

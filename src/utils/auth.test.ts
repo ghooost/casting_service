@@ -15,7 +15,7 @@ import { Company } from "@shared/company";
 import { ForbiddenError } from "@shared/error";
 import { User } from "@shared/user";
 
-describe("Server auth", () => {
+describe("utils/auth", () => {
   const admin: User = {
     id: 1,
     email: "some1@email.com",

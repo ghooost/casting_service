@@ -1,7 +1,7 @@
 import {
   makeApiForMap,
-  makeChildArrayApiWithAddRemove,
-  makeChildArrayApiWithLinks,
+  makeChildArrayApiEditable,
+  makeChildArrayApiLinkable,
 } from "./api";
 
 import { Applicant } from "@shared/applicant";
@@ -25,15 +25,15 @@ export const adapterCompanies = makeApiForMap(
   })
 );
 
-export const adapterOwners = makeChildArrayApiWithLinks(
+export const adapterOwners = makeChildArrayApiLinkable(
   (company: Company) => company.owners
 );
 
-export const adapterStuff = makeChildArrayApiWithLinks(
+export const adapterStuff = makeChildArrayApiLinkable(
   (company: Company) => company.stuff
 );
 
-export const adapterCastings = makeChildArrayApiWithAddRemove(
+export const adapterCastings = makeChildArrayApiEditable(
   (company: Company) => company.castings,
   (): Casting => ({
     id: 0,
@@ -44,7 +44,7 @@ export const adapterCastings = makeChildArrayApiWithAddRemove(
   })
 );
 
-export const adapterFields = makeChildArrayApiWithAddRemove(
+export const adapterFields = makeChildArrayApiEditable(
   (casting: Casting) => casting.fields,
   (): CastingField => ({
     id: 0,
@@ -54,7 +54,7 @@ export const adapterFields = makeChildArrayApiWithAddRemove(
   })
 );
 
-export const adapterRoles = makeChildArrayApiWithAddRemove(
+export const adapterRoles = makeChildArrayApiEditable(
   (casting: Casting) => casting.roles,
   (): CastingRole => ({
     id: 0,
@@ -62,7 +62,7 @@ export const adapterRoles = makeChildArrayApiWithAddRemove(
   })
 );
 
-export const adapterSlots = makeChildArrayApiWithAddRemove(
+export const adapterSlots = makeChildArrayApiEditable(
   (casting: Casting) => casting.slots,
   (): CastingSlot => ({
     id: 0,
@@ -74,7 +74,7 @@ export const adapterSlots = makeChildArrayApiWithAddRemove(
   })
 );
 
-export const adapterApplicants = makeChildArrayApiWithAddRemove(
+export const adapterApplicants = makeChildArrayApiEditable(
   (slot: CastingSlot) => slot.applicants,
   (): Applicant => ({
     id: 0,

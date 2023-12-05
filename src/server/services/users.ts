@@ -32,7 +32,7 @@ const coreCreateUser = (data: Omit<User, "id">) => {
 };
 
 const coreGetUserById = (userId: User["id"]) => {
-  return adapterUsers.find(userId);
+  return adapterUsers.find(userId) ?? null;
 };
 
 const coreGetUserByEmail = (email: User["email"]) => {
@@ -75,7 +75,11 @@ const getUserById = (author: MaybeUser, userId: User["id"]) => {
   return maskPrivateData(user);
 };
 
-const updateUser = (author: MaybeUser, user: User, data: Omit<User, "id">) => {
+const updateUser = (
+  author: MaybeUser,
+  user: User,
+  data: Partial<Omit<User, "id">>
+) => {
   if (!author) {
     throw new ForbiddenError();
   }
@@ -83,23 +87,29 @@ const updateUser = (author: MaybeUser, user: User, data: Omit<User, "id">) => {
     throw new ForbiddenError();
   }
   const normData: Record<string, unknown> = {};
-  const email = normalizeEmail(data.email);
-  const password = normalizeString(data.password);
-  const isAdmin = normalizeBool(data.isAdmin);
-  if (email !== user.email) {
-    if (!email) {
-      throw new ParamsError("wrong email");
+  if (data.email) {
+    const email = normalizeEmail(data.email);
+    if (email !== user.email) {
+      if (!email) {
+        throw new ParamsError("wrong email");
+      }
+      const users = coreFilterUsersByEmail(email);
+      if (users.length > 0 && users[0].id !== user.id) {
+        throw new ParamsError("email already exists");
+      }
+      normData.email = email;
     }
-    const users = coreFilterUsersByEmail(email);
-    if (users.length > 0 && users[0].id !== user.id) {
-      throw new ParamsError("email already exists");
+  }
+  if (data.password) {
+    const password = normalizeString(data.password);
+    if (password && user.password !== password) {
+      normData.password = password;
     }
-    normData.email = email;
   }
-  if (password && user.password !== password) {
-    normData.password = password;
+  if (data.isAdmin !== undefined) {
+    const isAdmin = normalizeBool(data.isAdmin);
+    normData.isAdmin = author.isAdmin ? isAdmin : false;
   }
-  normData.isAdmin = author.isAdmin ? isAdmin : false;
   return adapterUsers.update(user.id, normData);
 };
 

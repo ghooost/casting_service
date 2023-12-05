@@ -1,3 +1,4 @@
+import { ProcessingError } from "@shared/error";
 import { updateObject } from "@utils/objects";
 
 interface TypeWithID {
@@ -7,7 +8,13 @@ interface TypeWithID {
 export const makeApiForMap = <C extends TypeWithID>(
   collection: Map<C["id"], C>,
   getDefaultItem: () => C,
-  initId: number = 0
+  initId: number = 0,
+  // this lock preserves setData calling
+  // to avoid resetting of 'productive' collections
+  // unlock it in api instances
+  // you create with your local test collections
+  // in tests
+  isLocked: boolean = true
 ) => {
   let localId = initId;
   return {
@@ -19,12 +26,16 @@ export const makeApiForMap = <C extends TypeWithID>(
       return items.filter(fn);
     },
 
-    has(itemId: C["id"]) {
+    has(item: C) {
+      return collection.has(item.id);
+    },
+
+    hasId(itemId: C["id"]) {
       return collection.has(itemId);
     },
 
     find(itemId: C["id"]) {
-      return collection.get(itemId);
+      return collection.get(itemId) ?? null;
     },
 
     update(itemId: C["id"], data: Partial<C>) {
@@ -47,10 +58,19 @@ export const makeApiForMap = <C extends TypeWithID>(
 
     remove(item: C) {
       collection.delete(item.id);
+      return item;
     },
 
     isEmpty() {
       return collection.size === 0;
+    },
+
+    setData(data: C[]) {
+      if (isLocked) {
+        throw new ProcessingError("Call setData for a locked API");
+      }
+      collection.clear();
+      data.forEach((item) => collection.set(item.id, item));
     },
   };
 };
@@ -71,8 +91,14 @@ export const makeChildArrayApi = <P, C extends TypeWithID>(
       return getCollection(parent).includes(item);
     },
 
+    hasId(parent: P, itemId: C["id"]) {
+      return (
+        getCollection(parent).find(({ id }) => id === itemId) !== undefined
+      );
+    },
+
     find(parent: P, itemId: C["id"]) {
-      return getCollection(parent).find(({ id }) => id === itemId);
+      return getCollection(parent).find(({ id }) => id === itemId) ?? null;
     },
 
     update(parent: P, itemId: C["id"], data: Partial<C>) {
@@ -104,7 +130,7 @@ export const makeChildArrayApi = <P, C extends TypeWithID>(
   };
 };
 
-export const makeChildArrayApiWithLinks = <P, C extends TypeWithID>(
+export const makeChildArrayApiLinkable = <P, C extends TypeWithID>(
   getCollection: (parent: P) => C[]
 ) => {
   return {
@@ -124,7 +150,7 @@ export const makeChildArrayApiWithLinks = <P, C extends TypeWithID>(
   };
 };
 
-export const makeChildArrayApiWithAddRemove = <P, C extends TypeWithID>(
+export const makeChildArrayApiEditable = <P, C extends TypeWithID>(
   getCollection: (parent: P) => C[],
   getDefaultItem: () => C,
   initId: number = 0

@@ -19,6 +19,10 @@ export const makeApiForMap = <C extends TypeWithID>(
       return items.filter(fn);
     },
 
+    has(itemId: C["id"]) {
+      return collection.has(itemId);
+    },
+
     find(itemId: C["id"]) {
       return collection.get(itemId);
     },
@@ -61,6 +65,10 @@ export const makeChildArrayApi = <P, C extends TypeWithID>(
         return items;
       }
       return items.filter(fn);
+    },
+
+    has(parent: P, item: C) {
+      return getCollection(parent).includes(item);
     },
 
     find(parent: P, itemId: C["id"]) {

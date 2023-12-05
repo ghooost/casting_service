@@ -43,9 +43,9 @@ describe("utils/auth", () => {
   const company: Company = {
     id: 1,
     title: "company",
-    owners: new Set([owner]),
-    stuff: new Set([stuff]),
-    castings: new Set(),
+    owners: [owner],
+    stuff: [stuff],
+    castings: [],
   };
   const testString = "test string";
 

@@ -45,12 +45,13 @@ const makeResponse = () => {
   return response;
 };
 
-describe("controllers/auth", () => {
+describe("controllers/auth integration", () => {
   it("check collections", () => {
     expect(adapterUsers.isLocked()).toBe(false);
     expect(adapterSessions.isLocked()).toBe(false);
   });
-  it("signIn integration - empty DB", async () => {
+  it("signIn into empty DB", async () => {
+    // login into empty DB should add loggin user to DB with admin privileges
     await adapterUsers.setData([]);
     await adapterSessions.setData([]);
     const request = makeRequest(
@@ -66,12 +67,7 @@ describe("controllers/auth", () => {
 
     const response = makeResponse();
     const next = vi.fn();
-
-    try {
-      await signIn(request, response as unknown as express.Response, next);
-    } catch (e) {
-      throw new Error();
-    }
+    await signIn(request, response as unknown as express.Response, next);
     expect(response.status).toBeCalledWith(200);
     expect(request.context.author).toMatchObject({
       email: "test@test.com",
@@ -97,7 +93,7 @@ describe("controllers/auth", () => {
       },
     ]);
   });
-  it("signIn integration - ok user", async () => {
+  it("signIn with ok user", async () => {
     await adapterUsers.setData([
       {
         id: 1,
@@ -121,11 +117,7 @@ describe("controllers/auth", () => {
     const response = makeResponse();
     const next = vi.fn();
 
-    try {
-      await signIn(request, response as unknown as express.Response, next);
-    } catch (e) {
-      console.error(e);
-    }
+    await signIn(request, response as unknown as express.Response, next);
     expect(response.status).toBeCalledWith(200);
     expect(response.send.mock.calls[0][0]).toHaveProperty("sessionId");
     expect(request.context.author).toMatchObject({
@@ -148,7 +140,7 @@ describe("controllers/auth", () => {
       },
     ]);
   });
-  it("signIn integration - wrong user", async () => {
+  it("signIn with wrong user", async () => {
     await adapterUsers.setData([
       {
         id: 1,
@@ -172,12 +164,10 @@ describe("controllers/auth", () => {
     const response = makeResponse();
     const next = vi.fn();
 
-    try {
-      await signIn(request, response as unknown as express.Response, next);
-      expect(false, "signIn should throw forbidden error").toBe(true);
-    } catch (e) {
-      expect(e).toBeInstanceOf(ForbiddenError);
-    }
+    await expect(
+      async () =>
+        await signIn(request, response as unknown as express.Response, next)
+    ).rejects.toThrowError(ForbiddenError);
     expect(response.status).not.toBeCalled();
     expect(request.context.author).toBe(null);
   });

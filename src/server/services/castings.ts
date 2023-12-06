@@ -4,32 +4,35 @@ import { Casting } from "src/shared/casting";
 import { Company } from "src/shared/company";
 import { NotFoundError } from "src/shared/error";
 
-const getCastingList = (company: Company) => {
-  return adapterCastings.filter(company);
+const getCastingList = async (company: Company) => {
+  return await adapterCastings.filter(company);
 };
 
-const getCastingById = (company: Company, castingId: Casting["id"]) => {
-  const casting = adapterCastings.find(company, castingId);
+const getCastingById = async (company: Company, castingId: Casting["id"]) => {
+  const casting = await adapterCastings.find(company, castingId);
   if (!casting) {
     throw new NotFoundError();
   }
   return casting;
 };
 
-const createCasting = (company: Company, data: Pick<Casting, "title">) => {
-  return adapterCastings.add(company, data);
+const createCasting = async (
+  company: Company,
+  data: Pick<Casting, "title">
+) => {
+  return await adapterCastings.add(company, data);
 };
 
-const updateCasting = (
+const updateCasting = async (
   company: Company,
   casting: Casting,
   data: Partial<Casting>
 ) => {
-  return adapterCastings.update(company, casting.id, data);
+  return await adapterCastings.update(company, casting.id, data);
 };
 
-const deleteCasting = (company: Company, casting: Casting) => {
-  adapterCastings.remove(company, casting);
+const deleteCasting = async (company: Company, casting: Casting) => {
+  await adapterCastings.remove(company, casting);
 };
 
 export const serviceCastings = {

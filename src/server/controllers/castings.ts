@@ -1,39 +1,36 @@
 import express from "express";
 
+import { serviceCastings } from "@services/castings";
 import { serviceCompanies } from "@services/companies";
-import { serviceOwners } from "@services/owners";
-import { serviceUsers } from "@services/users";
+import { Casting } from "@shared/casting";
 import { Company } from "@shared/company";
-import { NotFoundError } from "@shared/error";
+import { NotFoundError, ProcessingError } from "@shared/error";
 import {
   BodyWithStatus,
   defaultOkResponse,
   RequestFreeParams,
 } from "@shared/express";
-import { MaybeUser, User } from "@shared/user";
+import { MaybeUser } from "@shared/user";
 import { selectContext } from "@utils/context";
-import { maskPrivateData } from "@utils/users";
-import { serviceCastings } from "@services/castings";
-import { Casting } from "@shared/casting";
 
 interface CastingIdParams extends RequestFreeParams {
   companyId: string;
   castingId: string;
 }
 
-const getCompanyByParam = (author: MaybeUser, param: string) => {
+const getCompanyByParam = async (author: MaybeUser, param: string) => {
   const companyId = parseInt(param);
   if (!companyId) {
     throw new NotFoundError();
   }
-  const company = serviceCompanies.getCompanyById(author, companyId);
+  const company = await serviceCompanies.getCompanyById(author, companyId);
   if (!company) {
     throw new NotFoundError();
   }
   return company;
 };
 
-const getCastingByParam = (
+const getCastingByParam = async (
   author: MaybeUser,
   company: Company,
   param: string
@@ -42,7 +39,11 @@ const getCastingByParam = (
   if (!castingId) {
     throw new NotFoundError();
   }
-  const casting = serviceCastings.getCastingById(author, company, castingId);
+  const casting = await serviceCastings.getCastingById(
+    author,
+    company,
+    castingId
+  );
   if (!casting) {
     throw new NotFoundError();
   }
@@ -52,54 +53,77 @@ const getCastingByParam = (
 export const listCastings: express.RequestHandler<
   CastingIdParams,
   Casting[]
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const castings = serviceCastings.getCastingList(author, company);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const castings = await serviceCastings.getCastingList(author, company);
   response.status(200).send(castings);
 };
 
-export const getCasting: express.RequestHandler<CastingIdParams, Casting> = (
-  request,
-  response
-) => {
+export const getCasting: express.RequestHandler<
+  CastingIdParams,
+  Casting
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = getOwnerByParam(author, company, request.params.ownerId);
-  response.status(200).send(maskPrivateData(owner));
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const casting = await getCastingByParam(
+    author,
+    company,
+    request.params.ownerId
+  );
+  response.status(200).send(casting);
 };
 
-export const createOwner: express.RequestHandler<
-  OwnerIdParams,
-  User,
-  Omit<User, "id">
-> = (request, response) => {
+export const createCasting: express.RequestHandler<
+  CastingIdParams,
+  Casting,
+  Omit<Casting, "id">
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = serviceUsers.createUser(author, request.body);
-  serviceOwners.addOwnerToCompany(author, company, owner);
-  response.status(200).send(maskPrivateData(owner));
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const casting = await serviceCastings.createCasting(
+    author,
+    company,
+    request.body
+  );
+  response.status(200).send(casting);
 };
 
-export const updateOwner: express.RequestHandler<
-  OwnerIdParams,
-  User,
-  Omit<User, "id">
-> = (request, response) => {
+export const updateCasting: express.RequestHandler<
+  CastingIdParams,
+  Casting,
+  Partial<Omit<Casting, "id">>
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = getOwnerByParam(author, company, request.params.ownerId);
-  serviceUsers.updateUser(author, owner, request.body);
-  response.status(200).send(maskPrivateData(owner));
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const casting = await getCastingByParam(
+    author,
+    company,
+    request.params.ownerId
+  );
+  const result = await serviceCastings.updateCasting(
+    author,
+    company,
+    casting,
+    request.body
+  );
+  if (!result) {
+    throw new ProcessingError();
+  }
+  response.status(200).send(result);
 };
 
-export const deleteOwner: express.RequestHandler<
-  OwnerIdParams,
+export const deleteCasting: express.RequestHandler<
+  CastingIdParams,
   BodyWithStatus
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = getOwnerByParam(author, company, request.params.ownerId);
-  serviceOwners.removeOwnerFromCompany(author, company, owner);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const casting = await getCastingByParam(
+    author,
+    company,
+    request.params.ownerId
+  );
+  await serviceCastings.deleteCasting(author, company, casting);
   response.status(200).send(defaultOkResponse);
 };

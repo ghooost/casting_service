@@ -3,40 +3,43 @@ import { Casting, CastingSlot } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
-const getSlotsList = (casting: Casting) => {
-  return adapterSlots.filter(casting);
+const getSlotsList = async (casting: Casting) => {
+  return await adapterSlots.filter(casting);
 };
 
-const getSlotById = (casting: Casting, slotId: CastingSlot["id"]) => {
-  const slot = adapterSlots.find(casting, slotId);
+const getSlotById = async (casting: Casting, slotId: CastingSlot["id"]) => {
+  const slot = await adapterSlots.find(casting, slotId);
   if (!slot) {
     throw new NotFoundError();
   }
   return slot;
 };
 
-const createSlot = (
+const createSlot = async (
   casting: Casting,
   data: Omit<CastingSlot, "id" | "applicants">
 ) => {
-  return adapterSlots.add(casting, data);
+  return await adapterSlots.add(casting, data);
 };
 
-const updateSlot = (
+const updateSlot = async (
   casting: Casting,
   slot: CastingSlot,
   data: Partial<Omit<CastingSlot, "id" | "applicants">>
 ) => {
-  adapterSlots.update(casting, slot.id, data);
+  await adapterSlots.update(casting, slot.id, data);
   return slot;
 };
 
-const deleteSlot = (casting: Casting, slot: CastingSlot) => {
-  adapterSlots.remove(casting, slot);
+const deleteSlot = async (casting: Casting, slot: CastingSlot) => {
+  await adapterSlots.remove(casting, slot);
 };
 
-const reArrangeSlots = (casting: Casting, slotIds: CastingSlot["id"][]) => {
-  adapterSlots.reArrange(casting, slotIds);
+const reArrangeSlots = async (
+  casting: Casting,
+  slotIds: CastingSlot["id"][]
+) => {
+  await adapterSlots.reArrange(casting, slotIds);
 };
 
 export const serviceCompanies = {

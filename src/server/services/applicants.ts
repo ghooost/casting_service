@@ -4,32 +4,38 @@ import { CastingSlot } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
-const getApplicantsList = (slot: CastingSlot) => {
-  return adapterApplicants.filter(slot);
+const getApplicantsList = async (slot: CastingSlot) => {
+  return await adapterApplicants.filter(slot);
 };
 
-const getApplicantById = (slot: CastingSlot, applicantId: Applicant["id"]) => {
-  const applicant = adapterApplicants.find(slot, applicantId);
+const getApplicantById = async (
+  slot: CastingSlot,
+  applicantId: Applicant["id"]
+) => {
+  const applicant = await adapterApplicants.find(slot, applicantId);
   if (!applicant) {
     throw new NotFoundError();
   }
   return applicant;
 };
 
-const createApplicant = (slot: CastingSlot, data: Omit<Applicant, "id">) => {
-  return adapterApplicants.add(slot, data);
+const createApplicant = async (
+  slot: CastingSlot,
+  data: Omit<Applicant, "id">
+) => {
+  return await adapterApplicants.add(slot, data);
 };
 
-const updateApplicant = (
+const updateApplicant = async (
   slot: CastingSlot,
   applicant: Applicant,
   data: Omit<Applicant, "id">
 ) => {
-  return adapterApplicants.update(slot, applicant.id, data);
+  return await adapterApplicants.update(slot, applicant.id, data);
 };
 
-const deleteApplicant = (slot: CastingSlot, applicant: Applicant) => {
-  adapterApplicants.remove(slot, applicant);
+const deleteApplicant = async (slot: CastingSlot, applicant: Applicant) => {
+  await adapterApplicants.remove(slot, applicant);
 };
 
 export const serviceCompanies = {

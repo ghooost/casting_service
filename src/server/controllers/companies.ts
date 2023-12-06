@@ -2,7 +2,7 @@ import express from "express";
 
 import { serviceCompanies } from "@services/companies";
 import { Company, CompanyMinData } from "@shared/company";
-import { NotFoundError } from "@shared/error";
+import { NotFoundError, ProcessingError } from "@shared/error";
 import {
   BodyWithStatus,
   defaultOkResponse,
@@ -20,12 +20,12 @@ const maskCompanyExtendedData = ({ id, title }: Company) => ({
   title,
 });
 
-const getCompanyByParam = (author: MaybeUser, param: string) => {
+const getCompanyByParam = async (author: MaybeUser, param: string) => {
   const companyId = parseInt(param);
   if (!companyId) {
     throw new NotFoundError();
   }
-  const company = serviceCompanies.getCompanyById(author, companyId);
+  const company = await serviceCompanies.getCompanyById(author, companyId);
   if (!company) {
     throw new NotFoundError();
   }
@@ -35,18 +35,18 @@ const getCompanyByParam = (author: MaybeUser, param: string) => {
 export const listCompanies: express.RequestHandler<
   RequestFreeParams,
   CompanyMinData[]
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const companies = serviceCompanies.getCompaniesList(author);
+  const companies = await serviceCompanies.getCompaniesList(author);
   response.status(200).send(companies.map(maskCompanyExtendedData));
 };
 
 export const getCompany: express.RequestHandler<
   CompanyIdParams,
   CompanyMinData
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
+  const company = await getCompanyByParam(author, request.params.companyId);
   response.status(200).send(maskCompanyExtendedData(company));
 };
 
@@ -54,29 +54,36 @@ export const createCompany: express.RequestHandler<
   RequestFreeParams,
   CompanyMinData,
   Pick<Company, "title">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const user = serviceCompanies.createCompany(author, request.body);
-  response.status(200).send(maskCompanyExtendedData(user));
+  const company = await serviceCompanies.createCompany(author, request.body);
+  response.status(200).send(maskCompanyExtendedData(company));
 };
 
 export const updateCompany: express.RequestHandler<
   CompanyIdParams,
   CompanyMinData,
   Pick<Company, "title">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const result = serviceCompanies.updateCompany(author, company, request.body);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const result = await serviceCompanies.updateCompany(
+    author,
+    company,
+    request.body
+  );
+  if (!result) {
+    throw new ProcessingError();
+  }
   response.status(200).send(maskCompanyExtendedData(result));
 };
 
 export const deleteCompany: express.RequestHandler<
   CompanyIdParams,
   BodyWithStatus
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  serviceCompanies.deleteCompany(author, company);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  await serviceCompanies.deleteCompany(author, company);
   response.status(200).send(defaultOkResponse);
 };

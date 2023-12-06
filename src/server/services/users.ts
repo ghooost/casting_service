@@ -9,73 +9,73 @@ import {
 } from "@utils/normalize";
 import { maskPrivateData } from "@utils/users";
 
-const coreFilterUsersByEmail = (inEmail: User["email"]) => {
-  return adapterUsers.filter(({ email }) => email === inEmail);
+const coreFilterUsersByEmail = async (inEmail: User["email"]) => {
+  return await adapterUsers.filter(({ email }) => email === inEmail);
 };
 
-const coreCreateUser = (data: Omit<User, "id">) => {
+const coreCreateUser = async (data: Omit<User, "id">) => {
   const email = normalizeEmail(data.email);
   const password = normalizeString(data.password);
   const isAdmin = normalizeBool(data.isAdmin);
   if (!email || !password) {
     throw new ParamsError();
   }
-  const users = coreFilterUsersByEmail(email);
+  const users = await coreFilterUsersByEmail(email);
   if (users.length > 0) {
     throw new ParamsError("email already exists");
   }
-  return adapterUsers.add({
+  return await adapterUsers.add({
     email,
     password,
     isAdmin,
   });
 };
 
-const coreGetUserById = (userId: User["id"]) => {
-  return adapterUsers.find(userId) ?? null;
+const coreGetUserById = async (userId: User["id"]) => {
+  return (await adapterUsers.find(userId)) ?? null;
 };
 
-const coreGetUserByEmail = (email: User["email"]) => {
-  const emails = coreFilterUsersByEmail(email);
+const coreGetUserByEmail = async (email: User["email"]) => {
+  const emails = await coreFilterUsersByEmail(email);
   if (emails.length < 1) {
     return null;
   }
   return emails[0];
 };
 
-const coreCreateInitialUserIfNoUsersAtAll = (
+const coreCreateInitialUserIfNoUsersAtAll = async (
   email: User["email"],
   password: User["password"]
 ) => {
-  if (adapterUsers.isEmpty()) {
-    coreCreateUser({ email, password, isAdmin: true });
+  if (await adapterUsers.isEmpty()) {
+    await coreCreateUser({ email, password, isAdmin: true });
   }
 };
 
-const getUserList = () => {
-  return adapterUsers.filter(() => true);
+const getUserList = async () => {
+  return await adapterUsers.filter(() => true);
 };
 
-const createUser = (data: Omit<User, "id">) => {
-  return coreCreateUser(data);
+const createUser = async (data: Omit<User, "id">) => {
+  return await coreCreateUser(data);
 };
 
-const deleteUser = (user: User) => {
-  adapterUsers.remove(user);
+const deleteUser = async (user: User) => {
+  await adapterUsers.remove(user);
 };
 
-const getUserById = (author: MaybeUser, userId: User["id"]) => {
-  const user = adapterUsers.find(userId);
+const getUserById = async (author: MaybeUser, userId: User["id"]) => {
+  const user = await adapterUsers.find(userId);
   if (!user) {
     throw new NotFoundError();
   }
-  if (!canManageServiceLevel(author) && user !== author) {
+  if (!(await canManageServiceLevel(author)) && user !== author) {
     throw new ForbiddenError();
   }
-  return maskPrivateData(user);
+  return await maskPrivateData(user);
 };
 
-const updateUser = (
+const updateUser = async (
   author: MaybeUser,
   user: User,
   data: Partial<Omit<User, "id">>
@@ -83,7 +83,7 @@ const updateUser = (
   if (!author) {
     throw new ForbiddenError();
   }
-  if (!canManageServiceLevel(author) && user !== author) {
+  if (!(await canManageServiceLevel(author)) && user !== author) {
     throw new ForbiddenError();
   }
   const normData: Record<string, unknown> = {};
@@ -93,7 +93,7 @@ const updateUser = (
       if (!email) {
         throw new ParamsError("wrong email");
       }
-      const users = coreFilterUsersByEmail(email);
+      const users = await coreFilterUsersByEmail(email);
       if (users.length > 0 && users[0].id !== user.id) {
         throw new ParamsError("email already exists");
       }
@@ -110,7 +110,7 @@ const updateUser = (
     const isAdmin = normalizeBool(data.isAdmin);
     normData.isAdmin = author.isAdmin ? isAdmin : false;
   }
-  return adapterUsers.update(user.id, normData);
+  return await adapterUsers.update(user.id, normData);
 };
 
 export const serviceUsers = {

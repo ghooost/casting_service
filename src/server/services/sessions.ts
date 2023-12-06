@@ -14,35 +14,35 @@ const isValidSession = (session: MaybeSession) => {
   return true;
 };
 
-const getSessionById = (sessionId: Session["id"] | undefined) => {
+const getSessionById = async (sessionId: Session["id"] | undefined) => {
   if (!sessionId) {
     return null;
   }
-  const session = adapterSessions.find(sessionId);
+  const session = await adapterSessions.find(sessionId);
   if (!session || !isValidSession(session)) {
     return null;
   }
   return session;
 };
 
-const updateSession = (session: Session) => {
+const updateSession = async (session: Session) => {
   if (!session || !isValidSession(session)) {
     return null;
   }
-  return adapterSessions.update(session.id, {
+  return await adapterSessions.update(session.id, {
     endTime: Date.now() + SESSION_EXPIRATION_MS,
   });
 };
 
-const createSession = (userId: Session["userId"]) => {
-  return adapterSessions.add({
+const createSession = async (userId: Session["userId"]) => {
+  return await adapterSessions.add({
     userId,
     endTime: Date.now() + SESSION_EXPIRATION_MS,
   });
 };
 
-const deleteSession = (session: Session) => {
-  adapterSessions.remove(session);
+const deleteSession = async (session: Session) => {
+  await adapterSessions.remove(session);
 };
 
 export const serviceSessions = {

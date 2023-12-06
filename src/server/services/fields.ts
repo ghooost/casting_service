@@ -3,36 +3,42 @@ import { Casting, CastingField } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
-const getFieldsList = (casting: Casting) => {
-  return adapterFields.filter(casting);
+const getFieldsList = async (casting: Casting) => {
+  return await adapterFields.filter(casting);
 };
 
-const getFieldById = (casting: Casting, fieldId: CastingField["id"]) => {
-  const field = adapterFields.find(casting, fieldId);
+const getFieldById = async (casting: Casting, fieldId: CastingField["id"]) => {
+  const field = await adapterFields.find(casting, fieldId);
   if (!field) {
     throw new NotFoundError();
   }
   return field;
 };
 
-const createField = (casting: Casting, data: Omit<CastingField, "id">) => {
-  return adapterFields.add(casting, data);
+const createField = async (
+  casting: Casting,
+  data: Omit<CastingField, "id">
+) => {
+  return await adapterFields.add(casting, data);
 };
 
-const updateField = (
+const updateField = async (
   casting: Casting,
   field: CastingField,
   data: Omit<CastingField, "id">
 ) => {
-  return adapterFields.update(casting, field.id, data);
+  return await adapterFields.update(casting, field.id, data);
 };
 
-const deleteField = (casting: Casting, field: CastingField) => {
-  adapterFields.remove(casting, field);
+const deleteField = async (casting: Casting, field: CastingField) => {
+  await adapterFields.remove(casting, field);
 };
 
-const reArrangeFields = (casting: Casting, fieldIds: CastingField["id"][]) => {
-  adapterFields.reArrange(casting, fieldIds);
+const reArrangeFields = async (
+  casting: Casting,
+  fieldIds: CastingField["id"][]
+) => {
+  await adapterFields.reArrange(casting, fieldIds);
 };
 
 export const serviceCompanies = {

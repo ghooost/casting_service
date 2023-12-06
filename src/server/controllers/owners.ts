@@ -19,19 +19,19 @@ interface OwnerIdParams extends RequestFreeParams {
   ownerId: string;
 }
 
-const getCompanyByParam = (author: MaybeUser, param: string) => {
+const getCompanyByParam = async (author: MaybeUser, param: string) => {
   const companyId = parseInt(param);
   if (!companyId) {
     throw new NotFoundError();
   }
-  const company = serviceCompanies.getCompanyById(author, companyId);
+  const company = await serviceCompanies.getCompanyById(author, companyId);
   if (!company) {
     throw new NotFoundError();
   }
   return company;
 };
 
-const getOwnerByParam = (
+const getOwnerByParam = async (
   author: MaybeUser,
   company: Company,
   param: string
@@ -40,30 +40,30 @@ const getOwnerByParam = (
   if (!userId) {
     throw new NotFoundError();
   }
-  const user = serviceUsers.getUserById(author, userId);
-  if (!company.owners.has(user)) {
+  const user = await serviceUsers.getUserById(author, userId);
+  if (!serviceOwners.has(author, company, user)) {
     throw new NotFoundError();
   }
   return user;
 };
 
-export const listOwners: express.RequestHandler<OwnerIdParams, User[]> = (
+export const listOwners: express.RequestHandler<OwnerIdParams, User[]> = async (
   request,
   response
 ) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owners = Array.from(company.owners);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const owners = await serviceOwners.getOwnerList(author, company);
   response.status(200).send(owners.map(maskPrivateData));
 };
 
-export const getOwner: express.RequestHandler<OwnerIdParams, User> = (
+export const getOwner: express.RequestHandler<OwnerIdParams, User> = async (
   request,
   response
 ) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = getOwnerByParam(author, company, request.params.ownerId);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const owner = await getOwnerByParam(author, company, request.params.ownerId);
   response.status(200).send(maskPrivateData(owner));
 };
 
@@ -71,11 +71,11 @@ export const createOwner: express.RequestHandler<
   OwnerIdParams,
   User,
   Omit<User, "id">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = serviceUsers.createUser(author, request.body);
-  serviceOwners.addOwnerToCompany(author, company, owner);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const owner = await serviceUsers.createUser(author, request.body);
+  await serviceOwners.addOwnerToCompany(author, company, owner);
   response.status(200).send(maskPrivateData(owner));
 };
 
@@ -83,21 +83,21 @@ export const updateOwner: express.RequestHandler<
   OwnerIdParams,
   User,
   Omit<User, "id">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = getOwnerByParam(author, company, request.params.ownerId);
-  serviceUsers.updateUser(author, owner, request.body);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const owner = await getOwnerByParam(author, company, request.params.ownerId);
+  await serviceUsers.updateUser(author, owner, request.body);
   response.status(200).send(maskPrivateData(owner));
 };
 
 export const deleteOwner: express.RequestHandler<
   OwnerIdParams,
   BodyWithStatus
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const owner = getOwnerByParam(author, company, request.params.ownerId);
-  serviceOwners.removeOwnerFromCompany(author, company, owner);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const owner = await getOwnerByParam(author, company, request.params.ownerId);
+  await serviceOwners.removeOwnerFromCompany(author, company, owner);
   response.status(200).send(defaultOkResponse);
 };

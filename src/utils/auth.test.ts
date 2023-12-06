@@ -49,107 +49,139 @@ describe("utils/auth", () => {
   };
   const testString = "test string";
 
-  it("canManageServiceLevel", () => {
-    expect(canManageServiceLevel(admin), "for isAdmin").toBe(true);
-    expect(canManageServiceLevel(stuff), "for non admin").toBe(false);
-    expect(canManageServiceLevel(null), "for null").toBe(false);
-    expect(canManageServiceLevel(undefined), "for undefined").toBe(false);
+  it("canManageServiceLevel", async () => {
+    expect(await canManageServiceLevel(admin), "for isAdmin").toBe(true);
+    expect(await canManageServiceLevel(stuff), "for non admin").toBe(false);
+    expect(await canManageServiceLevel(null), "for null").toBe(false);
+    expect(await canManageServiceLevel(undefined), "for undefined").toBe(false);
   });
-  it("canManageCompanyLevel", () => {
-    expect(canManageCompanyLevel(null, null)).toBe(false);
-    expect(canManageCompanyLevel(admin, null)).toBe(false);
-    expect(canManageCompanyLevel(admin, company)).toBe(true);
-    expect(canManageCompanyLevel(owner, company)).toBe(true);
-    expect(canManageCompanyLevel(stuff, company)).toBe(false);
-    expect(canManageCompanyLevel(other, company)).toBe(false);
+  it("canManageCompanyLevel", async () => {
+    expect(await canManageCompanyLevel(null, null)).toBe(false);
+    expect(await canManageCompanyLevel(admin, null)).toBe(false);
+    expect(await canManageCompanyLevel(admin, company)).toBe(true);
+    expect(await canManageCompanyLevel(owner, company)).toBe(true);
+    expect(await canManageCompanyLevel(stuff, company)).toBe(false);
+    expect(await canManageCompanyLevel(other, company)).toBe(false);
   });
-  it("canManageStuffLevel", () => {
-    expect(canManageStuffLevel(null, null)).toBe(false);
-    expect(canManageStuffLevel(admin, null)).toBe(false);
-    expect(canManageStuffLevel(admin, company)).toBe(true);
-    expect(canManageStuffLevel(owner, company)).toBe(true);
-    expect(canManageStuffLevel(stuff, company)).toBe(true);
-    expect(canManageStuffLevel(other, company)).toBe(false);
+  it("canManageStuffLevel", async () => {
+    expect(await canManageStuffLevel(null, null)).toBe(false);
+    expect(await canManageStuffLevel(admin, null)).toBe(false);
+    expect(await canManageStuffLevel(admin, company)).toBe(true);
+    expect(await canManageStuffLevel(owner, company)).toBe(true);
+    expect(await canManageStuffLevel(stuff, company)).toBe(true);
+    expect(await canManageStuffLevel(other, company)).toBe(false);
   });
-  it("checkAuthAdmin", () => {
+  it("checkAuthAdmin", async () => {
     const fn = vi.fn();
     const newFn = checkAuthAdmin(fn);
-    newFn(admin, testString, testString);
-    expect(() => newFn(owner, testString)).toThrowError(ForbiddenError);
-    expect(() => newFn(null, testString)).toThrowError(ForbiddenError);
+    await newFn(admin, testString, testString);
+    await expect(
+      async () => await newFn(owner, testString)
+    ).rejects.toThrowError(ForbiddenError);
+    await expect(
+      async () => await newFn(null, testString)
+    ).rejects.toThrowError(ForbiddenError);
     expect(fn.mock.lastCall).toMatchObject([testString, testString]);
     expect(fn).toBeCalledTimes(1);
   });
 
-  it("checkAuthOwner", () => {
+  it("checkAuthOwner", async () => {
     const fn = vi.fn();
     const newFn = checkAuthOwner(fn);
-    expect(() =>
-      newFn(admin, company, testString, testString)
-    ).not.toThrowError();
+    await newFn(admin, company, testString, testString);
     expect(fn.mock.lastCall).toMatchObject([testString, testString]);
-    expect(() => newFn(owner, company, testString)).not.toThrowError();
+    await newFn(owner, company, testString);
     expect(fn.mock.lastCall).toMatchObject([testString]);
-    expect(() => newFn(null, company, testString)).toThrowError();
-    expect(() => newFn(stuff, company, testString)).toThrowError();
-    expect(() => newFn(other, company, testString)).toThrowError();
-    expect(() => newFn(other, null, testString)).toThrowError();
-    expect(() => newFn(admin, null, testString)).toThrowError();
+    await expect(
+      async () => await newFn(null, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(stuff, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(other, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(other, null, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(admin, null, testString)
+    ).rejects.toThrowError();
     expect(fn).toBeCalledTimes(2);
   });
 
-  it("checkAuthOwnerWithCompany", () => {
+  it("checkAuthOwnerWithCompany", async () => {
     const fn = vi.fn();
     const newFn = checkAuthOwnerWithCompany(fn);
-    expect(() =>
-      newFn(admin, company, testString, testString)
-    ).not.toThrowError();
+    await newFn(admin, company, testString, testString);
     expect(fn.mock.lastCall).toMatchObject([company, testString, testString]);
-    expect(() => newFn(owner, company, testString)).not.toThrowError();
+    await newFn(owner, company, testString);
     expect(fn.mock.lastCall).toMatchObject([company, testString]);
-    expect(() => newFn(null, company, testString)).toThrowError();
-    expect(() => newFn(stuff, company, testString)).toThrowError();
-    expect(() => newFn(other, company, testString)).toThrowError();
-    expect(() => newFn(other, null, testString)).toThrowError();
-    expect(() => newFn(admin, null, testString)).toThrowError();
+    expect(
+      async () => await newFn(null, company, testString)
+    ).rejects.toThrowError();
+    expect(
+      async () => await newFn(stuff, company, testString)
+    ).rejects.toThrowError();
+    expect(
+      async () => await newFn(other, company, testString)
+    ).rejects.toThrowError();
+    expect(
+      async () => await newFn(other, null, testString)
+    ).rejects.toThrowError();
+    expect(
+      async () => await newFn(admin, null, testString)
+    ).rejects.toThrowError();
     expect(fn).toBeCalledTimes(2);
   });
 
-  it("checkAuthStuff", () => {
+  it("checkAuthStuff", async () => {
     const fn = vi.fn();
     const newFn = checkAuthStuff(fn);
-    expect(() =>
-      newFn(admin, company, testString, testString)
-    ).not.toThrowError();
+    await newFn(admin, company, testString, testString);
     expect(fn.mock.lastCall).toMatchObject([testString, testString]);
-    expect(() => newFn(owner, company, testString)).not.toThrowError();
+    await newFn(owner, company, testString);
     expect(fn.mock.lastCall).toMatchObject([testString]);
-    expect(() => newFn(stuff, company, testString)).not.toThrowError();
+    await newFn(stuff, company, testString);
     expect(fn.mock.lastCall).toMatchObject([testString]);
 
-    expect(() => newFn(null, company, testString)).toThrowError();
-    expect(() => newFn(other, company, testString)).toThrowError();
-    expect(() => newFn(other, null, testString)).toThrowError();
-    expect(() => newFn(admin, null, testString)).toThrowError();
+    await expect(
+      async () => await newFn(null, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(other, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(other, null, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(admin, null, testString)
+    ).rejects.toThrowError();
     expect(fn).toBeCalledTimes(3);
   });
 
-  it("checkAuthStuffWithCompany", () => {
+  it("checkAuthStuffWithCompany", async () => {
     const fn = vi.fn();
     const newFn = checkAuthStuffWithCompany(fn);
-    expect(() =>
-      newFn(admin, company, testString, testString)
-    ).not.toThrowError();
+    await newFn(admin, company, testString, testString);
     expect(fn.mock.lastCall).toMatchObject([company, testString, testString]);
-    expect(() => newFn(owner, company, testString)).not.toThrowError();
+    await newFn(owner, company, testString);
     expect(fn.mock.lastCall).toMatchObject([company, testString]);
-    expect(() => newFn(stuff, company, testString)).not.toThrowError();
+    await newFn(stuff, company, testString);
     expect(fn.mock.lastCall).toMatchObject([company, testString]);
 
-    expect(() => newFn(null, company, testString)).toThrowError();
-    expect(() => newFn(other, company, testString)).toThrowError();
-    expect(() => newFn(other, null, testString)).toThrowError();
-    expect(() => newFn(admin, null, testString)).toThrowError();
+    await expect(
+      async () => await newFn(null, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(other, company, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(other, null, testString)
+    ).rejects.toThrowError();
+    await expect(
+      async () => await newFn(admin, null, testString)
+    ).rejects.toThrowError();
     expect(fn).toBeCalledTimes(3);
   });
 });

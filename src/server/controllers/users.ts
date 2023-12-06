@@ -1,7 +1,7 @@
 import express from "express";
 
 import { serviceUsers } from "@services/users";
-import { NotFoundError, ParamsError } from "@shared/error";
+import { NotFoundError, ParamsError, ProcessingError } from "@shared/error";
 import {
   BodyWithStatus,
   defaultOkResponse,
@@ -15,16 +15,16 @@ interface UserIdParams extends RequestFreeParams {
   userId: string;
 }
 
-export const listUsers: express.RequestHandler<RequestFreeParams, User[]> = (
-  request,
-  response
-) => {
+export const listUsers: express.RequestHandler<
+  RequestFreeParams,
+  User[]
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const users = serviceUsers.getUserList(author);
+  const users = await serviceUsers.getUserList(author);
   response.status(200).send(users.map(maskPrivateData));
 };
 
-export const getUser: express.RequestHandler<UserIdParams, User> = (
+export const getUser: express.RequestHandler<UserIdParams, User> = async (
   request,
   response
 ) => {
@@ -33,7 +33,7 @@ export const getUser: express.RequestHandler<UserIdParams, User> = (
   if (!userId) {
     throw new ParamsError("no valid userId provided");
   }
-  const user = serviceUsers.getUserById(author, userId);
+  const user = await serviceUsers.getUserById(author, userId);
   if (!user) {
     throw new NotFoundError("no user found");
   }
@@ -44,10 +44,10 @@ export const createUser: express.RequestHandler<
   RequestFreeParams,
   User,
   Omit<User, "id">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
   const userData = request.body;
-  const user = serviceUsers.createUser(author, userData);
+  const user = await serviceUsers.createUser(author, userData);
   response.status(200).send(maskPrivateData(user));
 };
 
@@ -55,31 +55,34 @@ export const updateUser: express.RequestHandler<
   UserIdParams,
   User,
   Omit<User, "id">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
   const userId = parseInt(request.params.userId);
   if (!userId) {
     throw new NotFoundError();
   }
-  const user = serviceUsers.getUserById(author, userId);
+  const user = await serviceUsers.getUserById(author, userId);
   if (!user) {
     throw new NotFoundError();
   }
   const userData = request.body;
-  const result = serviceUsers.updateUser(author, user, userData);
+  const result = await serviceUsers.updateUser(author, user, userData);
+  if (!result) {
+    throw new ProcessingError();
+  }
   response.status(200).send(maskPrivateData(result));
 };
 
 export const deleteUser: express.RequestHandler<
   UserIdParams,
   BodyWithStatus
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
   const userId = parseInt(request.params.userId);
-  const user = serviceUsers.getUserById(author, userId);
+  const user = await serviceUsers.getUserById(author, userId);
   if (!user) {
     throw new NotFoundError();
   }
-  serviceUsers.deleteUser(author, user);
+  await serviceUsers.deleteUser(author, user);
   response.status(200).send(defaultOkResponse);
 };

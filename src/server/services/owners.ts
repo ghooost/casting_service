@@ -3,22 +3,27 @@ import { Company } from "@shared/company";
 import { User } from "@shared/user";
 import { checkAuthOwnerWithCompany } from "@utils/auth";
 
-const getOwnerList = (company: Company) => {
-  return adapterOwners.filter(company);
+const getOwnerList = async (company: Company) => {
+  return await adapterOwners.filter(company);
 };
 
-const addOwnerToCompany = (company: Company, user: User) => {
-  adapterOwners.link(company, user);
+const addOwnerToCompany = async (company: Company, user: User) => {
+  await adapterOwners.link(company, user);
   return company;
 };
 
-const removeOwnerFromCompany = (company: Company, user: User) => {
-  adapterOwners.unlink(company, user);
+const removeOwnerFromCompany = async (company: Company, user: User) => {
+  await adapterOwners.unlink(company, user);
   return company;
 };
 
-export const serviceOwner = {
+const has = async (company: Company, user: User) => {
+  return await adapterOwners.has(company, user);
+};
+
+export const serviceOwners = {
   getOwnerList: checkAuthOwnerWithCompany(getOwnerList),
   addOwnerToCompany: checkAuthOwnerWithCompany(addOwnerToCompany),
   removeOwnerFromCompany: checkAuthOwnerWithCompany(removeOwnerFromCompany),
+  has: checkAuthOwnerWithCompany(has),
 };

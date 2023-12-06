@@ -31,19 +31,23 @@ vi.mock("@utils/context", () => ({
 }));
 
 describe("middleware/auth", () => {
-  it("authMiddleware null session", () => {
+  it("authMiddleware null session", async () => {
     mocks.selectContext.mockReturnValue({
       session: null,
       user: null,
     });
     mocks.getSessionById.mockReturnValue(null);
-    authMiddleware({} as express.Request, {} as express.Response, mocks.nextFn);
+    await authMiddleware(
+      {} as express.Request,
+      {} as express.Response,
+      mocks.nextFn
+    );
     expect(mocks.selectContext).toBeCalledTimes(1);
     expect(mocks.getSessionById).toBeCalledTimes(1);
     expect(mocks.nextFn).toBeCalledTimes(1);
     expect(mocks.updateSession).not.toBeCalled();
   });
-  it("authMiddleware not null session", () => {
+  it("authMiddleware not null session", async () => {
     const sessionObj = {};
     const userObj = {};
     const contextObj = {
@@ -53,7 +57,11 @@ describe("middleware/auth", () => {
     mocks.selectContext.mockReturnValue(contextObj);
     mocks.getSessionById.mockReturnValue(sessionObj);
     mocks.coreGetUserById.mockReturnValue(userObj);
-    authMiddleware({} as express.Request, {} as express.Response, mocks.nextFn);
+    await authMiddleware(
+      {} as express.Request,
+      {} as express.Response,
+      mocks.nextFn
+    );
     expect(mocks.updateSession).toBeCalledTimes(1);
     expect(mocks.nextFn).toBeCalledTimes(2);
     expect(contextObj.session).toBe(sessionObj);

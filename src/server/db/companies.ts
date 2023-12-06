@@ -14,16 +14,21 @@ import {
 import { Company } from "@shared/company";
 
 const collection = new Map<Company["id"], Company>();
-export const adapterCompanies = makeApiForMap(
-  collection,
-  (): Company => ({
-    id: 0,
-    title: "",
-    owners: [],
-    stuff: [],
-    castings: [],
-  })
-);
+const getDefaultItem = () => ({
+  id: 0,
+  title: "",
+  owners: [],
+  stuff: [],
+  castings: [],
+});
+
+export const makeAdapterCompanies = (
+  collection: Map<Company["id"], Company>,
+  isLocked: boolean = true,
+  initId: number = 0
+) => makeApiForMap(collection, getDefaultItem, isLocked, initId);
+
+export const adapterCompanies = makeAdapterCompanies(collection, true, 0);
 
 export const adapterOwners = makeChildArrayApiLinkable(
   (company: Company) => company.owners

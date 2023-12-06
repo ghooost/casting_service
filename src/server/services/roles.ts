@@ -3,36 +3,39 @@ import { Casting, CastingRole } from "@shared/casting";
 import { NotFoundError } from "@shared/error";
 import { checkAuthStuff } from "@utils/auth";
 
-const getRolesList = (casting: Casting) => {
-  return adapterRoles.filter(casting);
+const getRolesList = async (casting: Casting) => {
+  return await adapterRoles.filter(casting);
 };
 
-const getRoleById = (casting: Casting, roleId: CastingRole["id"]) => {
-  const role = adapterRoles.find(casting, roleId);
+const getRoleById = async (casting: Casting, roleId: CastingRole["id"]) => {
+  const role = await adapterRoles.find(casting, roleId);
   if (!role) {
     throw new NotFoundError();
   }
   return role;
 };
 
-const createRole = (casting: Casting, data: Omit<CastingRole, "id">) => {
-  return adapterRoles.add(casting, data);
+const createRole = async (casting: Casting, data: Omit<CastingRole, "id">) => {
+  return await adapterRoles.add(casting, data);
 };
 
-const updateRole = (
+const updateRole = async (
   casting: Casting,
   role: CastingRole,
   data: Omit<CastingRole, "id">
 ) => {
-  return adapterRoles.update(casting, role.id, data);
+  return await adapterRoles.update(casting, role.id, data);
 };
 
-const deleteRole = (casting: Casting, role: CastingRole) => {
-  adapterRoles.remove(casting, role);
+const deleteRole = async (casting: Casting, role: CastingRole) => {
+  await adapterRoles.remove(casting, role);
 };
 
-const reArrangeRoles = (casting: Casting, roleIds: CastingRole["id"][]) => {
-  adapterRoles.reArrange(casting, roleIds);
+const reArrangeRoles = async (
+  casting: Casting,
+  roleIds: CastingRole["id"][]
+) => {
+  await adapterRoles.reArrange(casting, roleIds);
 };
 
 export const serviceCompanies = {

@@ -19,19 +19,19 @@ interface StuffIdParams extends RequestFreeParams {
   stuffId: string;
 }
 
-const getCompanyByParam = (author: MaybeUser, param: string) => {
+const getCompanyByParam = async (author: MaybeUser, param: string) => {
   const companyId = parseInt(param);
   if (!companyId) {
     throw new NotFoundError();
   }
-  const company = serviceCompanies.getCompanyById(author, companyId);
+  const company = await serviceCompanies.getCompanyById(author, companyId);
   if (!company) {
     throw new NotFoundError();
   }
   return company;
 };
 
-const getStuffByParam = (
+const getStuffByParam = async (
   author: MaybeUser,
   company: Company,
   param: string
@@ -40,30 +40,30 @@ const getStuffByParam = (
   if (!userId) {
     throw new NotFoundError();
   }
-  const user = serviceUsers.getUserById(author, userId);
-  if (!company.stuff.has(user)) {
+  const user = await serviceUsers.getUserById(author, userId);
+  if (!(await serviceStuff.has(author, company, user))) {
     throw new NotFoundError();
   }
   return user;
 };
 
-export const listStuff: express.RequestHandler<StuffIdParams, User[]> = (
+export const listStuff: express.RequestHandler<StuffIdParams, User[]> = async (
   request,
   response
 ) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const stuff = Array.from(company.stuff);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const stuff = await serviceStuff.getStuffList(author, company);
   response.status(200).send(stuff.map(maskPrivateData));
 };
 
-export const getStuff: express.RequestHandler<StuffIdParams, User> = (
+export const getStuff: express.RequestHandler<StuffIdParams, User> = async (
   request,
   response
 ) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const stuff = getStuffByParam(author, company, request.params.stuffId);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const stuff = await getStuffByParam(author, company, request.params.stuffId);
   response.status(200).send(maskPrivateData(stuff));
 };
 
@@ -71,11 +71,11 @@ export const createStuff: express.RequestHandler<
   StuffIdParams,
   User,
   Omit<User, "id">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const user = serviceUsers.createUser(author, request.body);
-  serviceStuff.addStuffToCompany(author, company, user);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const user = await serviceUsers.createUser(author, request.body);
+  await serviceStuff.addStuffToCompany(author, company, user);
   response.status(200).send(maskPrivateData(user));
 };
 
@@ -83,21 +83,21 @@ export const updateStuff: express.RequestHandler<
   StuffIdParams,
   User,
   Omit<User, "id">
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const user = getStuffByParam(author, company, request.params.stuffId);
-  serviceUsers.updateUser(author, user, request.body);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const user = await getStuffByParam(author, company, request.params.stuffId);
+  await serviceUsers.updateUser(author, user, request.body);
   response.status(200).send(maskPrivateData(user));
 };
 
 export const deleteStuff: express.RequestHandler<
   StuffIdParams,
   BodyWithStatus
-> = (request, response) => {
+> = async (request, response) => {
   const { author } = selectContext(request);
-  const company = getCompanyByParam(author, request.params.companyId);
-  const user = getStuffByParam(author, company, request.params.stuffId);
-  serviceStuff.removeStuffFromCompany(author, company, user);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  const user = await getStuffByParam(author, company, request.params.stuffId);
+  await serviceStuff.removeStuffFromCompany(author, company, user);
   response.status(200).send(defaultOkResponse);
 };

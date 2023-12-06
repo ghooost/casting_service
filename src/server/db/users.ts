@@ -14,9 +14,9 @@ const getDefaultUser = () => ({
 // create your own mock DB for tests
 export const makeAdapterUsers = (
   collection: Map<User["id"], User>,
-  initId: number = 0,
-  isLocked: boolean = true
-) => makeApiForMap(collection, getDefaultUser, initId, isLocked);
+  isLocked: boolean = true,
+  initId: number = 0
+) => makeApiForMap(collection, getDefaultUser, isLocked, initId);
 
 // standart adapter for user DB
 export const adapterUsers = makeAdapterUsers(collection);

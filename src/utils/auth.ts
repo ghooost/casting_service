@@ -9,7 +9,7 @@ import { MaybeUser } from "@shared/user";
  * @param {MaybeUser} author - The user to be checked for authorization.
  * @returns {boolean} Returns `true` if the user has the authority; otherwise, returns `false`.
  */
-export const canManageServiceLevel = (author: MaybeUser) => {
+export const canManageServiceLevel = async (author: MaybeUser) => {
   if (!author) {
     return false;
   }
@@ -23,17 +23,17 @@ export const canManageServiceLevel = (author: MaybeUser) => {
  * @param {MaybeCompany} company - The company to be checked for ownership.
  * @returns {boolean} Returns `true` if the user has the authority or is an owner of the company; otherwise, returns `false`.
  */
-export const canManageCompanyLevel = (
+export const canManageCompanyLevel = async (
   author: MaybeUser,
   company: MaybeCompany
 ) => {
   if (!author || !company) {
     return false;
   }
-  if (canManageServiceLevel(author)) {
+  if (await canManageServiceLevel(author)) {
     return true;
   }
-  return adapterOwners.has(company, author);
+  return await adapterOwners.has(company, author);
 };
 
 /**
@@ -43,17 +43,17 @@ export const canManageCompanyLevel = (
  * @param {MaybeCompany} company - The company to be checked for ownership.
  * @returns {boolean} Returns `true` if the user has the authority or is an owner/stuff member of the company; otherwise, returns `false`.
  */
-export const canManageStuffLevel = (
+export const canManageStuffLevel = async (
   author: MaybeUser,
   company: MaybeCompany
 ) => {
   if (!author || !company) {
     return false;
   }
-  if (canManageCompanyLevel(author, company)) {
+  if (await canManageCompanyLevel(author, company)) {
     return true;
   }
-  return adapterStuff.has(company, author);
+  return await adapterStuff.has(company, author);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,14 +73,14 @@ export const checkAuthAdmin = <T extends FuncType>(
   fn: T,
   forbiddenMessage?: string
 ) => {
-  return (
+  return async (
     author: MaybeUser,
     ...args: Parameters<typeof fn>
-  ): ReturnType<typeof fn> => {
-    if (!canManageServiceLevel(author)) {
+  ): Promise<ReturnType<typeof fn>> => {
+    if (!(await canManageServiceLevel(author))) {
       throw new ForbiddenError(forbiddenMessage);
     }
-    return fn(...args);
+    return await fn(...args);
   };
 };
 
@@ -98,15 +98,15 @@ export const checkAuthOwner = <T extends FuncType>(
   fn: T,
   forbiddenMessage?: string
 ) => {
-  return (
+  return async (
     author: MaybeUser,
     company: MaybeCompany,
     ...args: Parameters<typeof fn>
-  ): ReturnType<typeof fn> => {
-    if (!company || !canManageCompanyLevel(author, company)) {
+  ): Promise<ReturnType<typeof fn>> => {
+    if (!company || !(await canManageCompanyLevel(author, company))) {
       throw new ForbiddenError(forbiddenMessage);
     }
-    return fn(...args);
+    return await fn(...args);
   };
 };
 
@@ -124,15 +124,15 @@ export const checkAuthStuff = <T extends FuncType>(
   fn: T,
   forbiddenMessage?: string
 ) => {
-  return (
+  return async (
     author: MaybeUser,
     company: MaybeCompany,
     ...args: Parameters<typeof fn>
-  ): ReturnType<typeof fn> => {
-    if (!company || !canManageStuffLevel(author, company)) {
+  ): Promise<ReturnType<typeof fn>> => {
+    if (!company || !(await canManageStuffLevel(author, company))) {
       throw new ForbiddenError(forbiddenMessage);
     }
-    return fn(...args);
+    return await fn(...args);
   };
 };
 
@@ -154,15 +154,15 @@ export const checkAuthOwnerWithCompany = <T extends FuncWithCompanyType>(
   fn: T,
   forbiddenMessage?: string
 ) => {
-  return (
+  return async (
     author: MaybeUser,
     ...args: Parameters<typeof fn>
-  ): ReturnType<typeof fn> => {
+  ): Promise<ReturnType<typeof fn>> => {
     const company = args[0] as MaybeCompany;
-    if (!company || !canManageCompanyLevel(author, company)) {
+    if (!company || !(await canManageCompanyLevel(author, company))) {
       throw new ForbiddenError(forbiddenMessage);
     }
-    return fn(company, ...args.slice(1));
+    return await fn(company, ...args.slice(1));
   };
 };
 
@@ -181,14 +181,14 @@ export const checkAuthStuffWithCompany = <T extends FuncWithCompanyType>(
   fn: T,
   forbiddenMessage?: string
 ) => {
-  return (
+  return async (
     author: MaybeUser,
     ...args: Parameters<typeof fn>
-  ): ReturnType<typeof fn> => {
+  ): Promise<ReturnType<typeof fn>> => {
     const company = args[0];
-    if (!company || !canManageStuffLevel(author, company)) {
+    if (!company || !(await canManageStuffLevel(author, company))) {
       throw new ForbiddenError(forbiddenMessage);
     }
-    return fn(company, ...args.slice(1));
+    return await fn(company, ...args.slice(1));
   };
 };

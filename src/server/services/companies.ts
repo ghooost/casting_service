@@ -1,12 +1,12 @@
 import { adapterCompanies } from "@db/companies";
+import { Company } from "@shared/company";
+import { ForbiddenError, NotFoundError } from "@shared/error";
+import { MaybeUser } from "@shared/user";
 import {
   checkAuthOwnerWithCompany,
   checkAuthAdmin,
   canManageStuffLevel,
 } from "@utils/auth";
-import { Company } from "src/shared/company";
-import { ForbiddenError, NotFoundError } from "src/shared/error";
-import { MaybeUser } from "src/shared/user";
 
 const getCompaniesList = async (author: MaybeUser) => {
   if (!author) {
@@ -22,7 +22,7 @@ const getCompaniesList = async (author: MaybeUser) => {
 
 const getCompanyById = async (author: MaybeUser, companyId: Company["id"]) => {
   if (!author) {
-    throw new ForbiddenError();
+    throw new ForbiddenError("", "getCompanyById");
   }
   const company = await adapterCompanies.find(companyId);
   if (!company) {

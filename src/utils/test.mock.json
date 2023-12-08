@@ -1,0 +1,32 @@
+{
+  "users": [
+    { "id": 1, "email": "admin@test.com", "password": "1", "isAdmin": true },
+    { "id": 2, "email": "owner@test.com", "password": "1", "isAdmin": false },
+    { "id": 3, "email": "stuff@test.com", "password": "1", "isAdmin": false },
+    { "id": 4, "email": "free@test.com", "password": "1", "isAdmin": false }
+  ],
+  "sessions": [],
+  "companies": [
+    {
+      "id": 1,
+      "title": "company",
+      "owners": [
+        {
+          "id": 2,
+          "email": "owner@test.com",
+          "password": "1",
+          "isAdmin": false
+        }
+      ],
+      "stuff": [
+        {
+          "id": 3,
+          "email": "stuff@test.com",
+          "password": "1",
+          "isAdmin": false
+        }
+      ],
+      "castings": []
+    }
+  ]
+}

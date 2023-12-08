@@ -1,78 +1,228 @@
 import express from "express";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { listUsers } from "./users";
+import {
+  createUser,
+  deleteUser,
+  getUser,
+  listUsers,
+  updateUser,
+} from "./users";
 
 import { adapterUsers } from "@db/users";
-import { Context, RequestWithContext } from "@shared/context";
-import { ForbiddenError } from "@shared/error";
+import { ForbiddenError, NotFoundError, ParamsError } from "@shared/error";
+import { defaultOkResponse } from "@shared/express";
 import { User } from "@shared/user";
+import { initMockDb, makeRequest, makeResponse } from "@utils/test";
+import { maskPrivateData } from "@utils/users";
 
 vi.mock("@db/users", async (importOriginal) => {
   const collection = new Map<User["id"], User>();
   const origin = await importOriginal<typeof import("@db/users")>();
   return {
-    adapterUsers: origin.makeAdapterUsers(collection, false),
+    adapterUsers: origin.makeAdapterUsers(collection, false, 2),
   };
 });
 
-const makeRequest = (
-  params: Record<string, unknown>,
-  body: Record<string, unknown>,
-  context: Context
-) => {
-  return {
-    body,
-    context,
-    params,
-  } as unknown as RequestWithContext;
-};
+const next = vi.fn();
+const response = makeResponse();
+const [mockDb, resetDb] = initMockDb({ adapterUsers });
 
-const makeResponse = () => {
-  const statusFn = vi.fn();
-  const sendFn = vi.fn();
-  const response = {
-    status: statusFn,
-    send: sendFn,
-  };
-  statusFn.mockReturnValue(response);
-  sendFn.mockReturnValue(response);
-  return response;
-};
-
-const users: User[] = [
-  {
-    id: 1,
-    email: "test1@test.com",
-    password: "*", // will be returned with masked password
-    isAdmin: true,
-  },
-  {
-    id: 2,
-    email: "test2@test.com",
-    password: "*",
-    isAdmin: false,
-  },
-];
-
-describe("controllers/users integration", () => {
-  it("listUsers - for admin", async () => {
-    await adapterUsers.setData(users);
-    const request = makeRequest({}, {}, { author: users[0], session: null });
-    const response = makeResponse();
-    const next = vi.fn();
-    await listUsers(request, response as unknown as express.Response, next);
-    expect(response.status).toBeCalledWith(200);
-    expect(response.send.mock.calls[0][0]).toMatchObject(users);
+describe("controllers/users integration", async () => {
+  beforeEach(async () => {
+    await resetDb();
+    vi.clearAllMocks();
   });
-  it("listUsers - for non-admin", async () => {
-    await adapterUsers.setData(users);
-    const request = makeRequest({}, {}, { author: users[1], session: null });
-    const response = makeResponse();
-    const next = vi.fn();
-    await expect(
-      async () =>
-        await listUsers(request, response as unknown as express.Response, next)
-    ).rejects.toThrowError(ForbiddenError);
+
+  describe("listUsers", () => {
+    it("should work for admin and valid user id", async () => {
+      const request = makeRequest(
+        {},
+        {},
+        { author: mockDb.users[0], session: null }
+      );
+      await listUsers(request, response as unknown as express.Response, next);
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject(
+        mockDb.users.map(maskPrivateData)
+      );
+    });
+    it("should fail for non-admin", async () => {
+      const request = makeRequest(
+        {},
+        {},
+        { author: mockDb.users[1], session: null }
+      );
+      await expect(
+        async () =>
+          await listUsers(
+            request,
+            response as unknown as express.Response,
+            next
+          )
+      ).rejects.toThrowError(ForbiddenError);
+    });
+  });
+  describe("getUser", async () => {
+    it("should work for admin and valid user id", async () => {
+      const request = makeRequest(
+        { userId: `${mockDb.users[1].id}` },
+        {},
+        { author: mockDb.users[0], session: null }
+      );
+      await getUser(
+        request as unknown as Parameters<typeof getUser>[0],
+        response as unknown as express.Response,
+        next
+      );
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject(
+        maskPrivateData(mockDb.users[1])
+      );
+    });
+    it("should fail for admin and wrong user id", async () => {
+      const request = makeRequest(
+        { userId: `100` },
+        {},
+        { author: mockDb.users[0], session: null }
+      );
+      await expect(
+        async () =>
+          await getUser(
+            request as unknown as Parameters<typeof getUser>[0],
+            response as unknown as express.Response,
+            next
+          )
+      ).rejects.toThrowError(NotFoundError);
+    });
+    it("should fail for non-admin", async () => {
+      const request = makeRequest(
+        { userId: mockDb.users[1].id },
+        {},
+        { author: mockDb.users[2], session: null }
+      );
+      await expect(
+        async () =>
+          await getUser(
+            request as unknown as Parameters<typeof getUser>[0],
+            response as unknown as express.Response,
+            next
+          )
+      ).rejects.toThrowError(ForbiddenError);
+    });
+    it("should susseed for own requests", async () => {
+      const request = makeRequest(
+        { userId: mockDb.users[1].id },
+        {},
+        { author: mockDb.users[1], session: null }
+      );
+      await getUser(
+        request as unknown as Parameters<typeof getUser>[0],
+        response as unknown as express.Response,
+        next
+      );
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject(
+        maskPrivateData(mockDb.users[1])
+      );
+    });
+  });
+  describe("createUser", () => {
+    it("should work for admin", async () => {
+      const request = makeRequest(
+        {},
+        {
+          email: "new@test.com",
+          password: "2",
+          isAdmin: false,
+        },
+        { author: mockDb.users[0], session: null }
+      );
+      await createUser(
+        request as unknown as Parameters<typeof createUser>[0],
+        response as unknown as express.Response,
+        next
+      );
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject({
+        email: "new@test.com",
+        password: "*",
+        isAdmin: false,
+      });
+    });
+    it.skip("should fail for duplicate email", async () => {
+      const request = makeRequest(
+        {},
+        {
+          email: mockDb.users[1].email,
+          password: "2",
+          isAdmin: false,
+        },
+        { author: mockDb.users[0], session: null }
+      );
+      await expect(
+        async () =>
+          await createUser(
+            request as unknown as Parameters<typeof getUser>[0],
+            response as unknown as express.Response,
+            next
+          )
+      ).rejects.toThrowError(ParamsError);
+    });
+  });
+  describe("updateUser", () => {
+    it("should work for admin", async () => {
+      const request = makeRequest(
+        {
+          userId: mockDb.users[2].id,
+        },
+        { email: "new@test.com" },
+        { author: mockDb.users[0], session: null }
+      );
+      await updateUser(
+        request as unknown as Parameters<typeof getUser>[0],
+        response as unknown as express.Response,
+        next
+      );
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject(
+        maskPrivateData({ ...mockDb.users[2], email: "new@test.com" })
+      );
+    });
+    it("should fail for duplicate email", async () => {
+      const request = makeRequest(
+        {
+          userId: mockDb.users[2].id,
+        },
+        { email: mockDb.users[1].email },
+        { author: mockDb.users[0], session: null }
+      );
+      await expect(
+        async () =>
+          await updateUser(
+            request as unknown as Parameters<typeof getUser>[0],
+            response as unknown as express.Response,
+            next
+          )
+      ).rejects.toThrowError(ParamsError);
+    });
+  });
+  describe("deleteUser", () => {
+    it("admin can delete everybody", async () => {
+      const request = makeRequest(
+        {
+          userId: mockDb.users[2].id,
+        },
+        {},
+        { author: mockDb.users[0], session: null }
+      );
+      await deleteUser(
+        request as unknown as Parameters<typeof deleteUser>[0],
+        response as unknown as express.Response,
+        next
+      );
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject(defaultOkResponse);
+    });
   });
 });

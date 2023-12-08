@@ -40,9 +40,9 @@ const getStuffByParam = async (
   if (!userId) {
     throw new NotFoundError();
   }
-  const user = await serviceUsers.getUserById(author, userId);
-  if (!(await serviceStuff.has(author, company, user))) {
-    throw new NotFoundError();
+  const user = await serviceStuff.getStuffById(author, company, userId);
+  if (!user) {
+    throw new NotFoundError(`${userId} ${JSON.stringify(user)}`);
   }
   return user;
 };
@@ -74,7 +74,11 @@ export const createStuff: express.RequestHandler<
 > = async (request, response) => {
   const { author } = selectContext(request);
   const company = await getCompanyByParam(author, request.params.companyId);
-  const user = await serviceUsers.createUser(author, request.body);
+  const user = await serviceUsers.createCompanyUser(
+    author,
+    company,
+    request.body
+  );
   await serviceStuff.addStuffToCompany(author, company, user);
   response.status(200).send(maskPrivateData(user));
 };

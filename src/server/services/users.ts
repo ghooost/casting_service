@@ -1,13 +1,16 @@
 import { adapterUsers } from "@db/users";
 import { ForbiddenError, NotFoundError, ParamsError } from "@shared/error";
 import { MaybeUser, User } from "@shared/user";
-import { canManageServiceLevel, checkAuthAdmin } from "@utils/auth";
+import {
+  canManageServiceLevel,
+  checkAuthAdmin,
+  checkAuthOwner,
+} from "@utils/auth";
 import {
   normalizeBool,
   normalizeEmail,
   normalizeString,
 } from "@utils/normalize";
-import { maskPrivateData } from "@utils/users";
 
 const coreFilterUsersByEmail = async (inEmail: User["email"]) => {
   return await adapterUsers.filter(({ email }) => email === inEmail);
@@ -72,7 +75,7 @@ const getUserById = async (author: MaybeUser, userId: User["id"]) => {
   if (!(await canManageServiceLevel(author)) && user !== author) {
     throw new ForbiddenError();
   }
-  return await maskPrivateData(user);
+  return user;
 };
 
 const updateUser = async (
@@ -122,6 +125,7 @@ export const serviceUsers = {
   // standart auth
   getUserList: checkAuthAdmin(getUserList),
   createUser: checkAuthAdmin(createUser),
+  createCompanyUser: checkAuthOwner(createUser),
   deleteUser: checkAuthAdmin(deleteUser),
 
   // custom auth control

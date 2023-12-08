@@ -7,6 +7,10 @@ const getStuffList = async (company: Company) => {
   return await adapterStuff.filter(company);
 };
 
+const getStuffById = async (company: Company, id: User["id"]) => {
+  return await adapterStuff.find(company, id);
+};
+
 const addStuffToCompany = async (company: Company, user: User) => {
   await adapterStuff.link(company, user);
   return company;
@@ -23,6 +27,7 @@ const has = async (company: Company, user: User) => {
 
 export const serviceStuff = {
   getStuffList: checkAuthOwnerWithCompany(getStuffList),
+  getStuffById: checkAuthOwnerWithCompany(getStuffById),
   addStuffToCompany: checkAuthOwnerWithCompany(addStuffToCompany),
   removeStuffFromCompany: checkAuthOwnerWithCompany(removeStuffFromCompany),
   has: checkAuthOwnerWithCompany(has),

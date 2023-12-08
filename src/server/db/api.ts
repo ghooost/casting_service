@@ -83,7 +83,16 @@ export const makeApiForMap = <C extends TypeWithID>(
         throw new ProcessingError("Call setData for a locked API");
       }
       collection.clear();
-      data.forEach((item) => collection.set(item.id, item));
+      let maxId = 0;
+      data.forEach((item) => {
+        collection.set(item.id, item);
+        if (typeof item.id === "number" && item.id > maxId) {
+          maxId = item.id;
+        }
+      });
+      if (typeof localId === "number") {
+        localId = maxId;
+      }
     },
 
     isLocked() {

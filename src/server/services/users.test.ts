@@ -127,11 +127,9 @@ describe("services/users", () => {
     await adapterUsers.setData([user1, user2]);
     expect(await serviceUsers.getUserById(user1, user1.id)).toMatchObject({
       ...user1,
-      password: "*",
     });
     expect(await serviceUsers.getUserById(admin, user2.id)).toMatchObject({
       ...user2,
-      password: "*",
     });
     try {
       await serviceUsers.getUserById(user1, user2.id);

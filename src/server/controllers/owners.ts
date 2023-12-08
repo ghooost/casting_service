@@ -74,7 +74,11 @@ export const createOwner: express.RequestHandler<
 > = async (request, response) => {
   const { author } = selectContext(request);
   const company = await getCompanyByParam(author, request.params.companyId);
-  const owner = await serviceUsers.createUser(author, request.body);
+  const owner = await serviceUsers.createCompanyUser(
+    author,
+    company,
+    request.body
+  );
   await serviceOwners.addOwnerToCompany(author, company, owner);
   response.status(200).send(maskPrivateData(owner));
 };

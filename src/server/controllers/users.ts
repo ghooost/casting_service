@@ -86,3 +86,41 @@ export const deleteUser: express.RequestHandler<
   await serviceUsers.deleteUser(author, user);
   response.status(200).send(defaultOkResponse);
 };
+
+export const getUserSelf: express.RequestHandler<UserIdParams, User> = async (
+  request,
+  response
+) => {
+  const { author } = selectContext(request);
+  const userId = parseInt(request.params.userId);
+  if (!userId) {
+    throw new ParamsError("no valid userId provided");
+  }
+  const user = await serviceUsers.getUserById(author, userId);
+  if (!user) {
+    throw new NotFoundError("no user found");
+  }
+  response.status(200).send(maskPrivateData(user));
+};
+
+export const updateUserSelf: express.RequestHandler<
+  UserIdParams,
+  User,
+  Omit<User, "id">
+> = async (request, response) => {
+  const { author } = selectContext(request);
+  const userId = parseInt(request.params.userId);
+  if (!userId) {
+    throw new NotFoundError();
+  }
+  const user = await serviceUsers.getUserById(author, userId);
+  if (!user) {
+    throw new NotFoundError();
+  }
+  const userData = request.body;
+  const result = await serviceUsers.updateUser(author, user, userData);
+  if (!result) {
+    throw new ProcessingError();
+  }
+  response.status(200).send(maskPrivateData(result));
+};

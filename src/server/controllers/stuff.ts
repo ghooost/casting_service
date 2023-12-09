@@ -1,6 +1,5 @@
 import express from "express";
 
-import { serviceCompanies } from "@services/companies";
 import { serviceStuff } from "@services/stuff";
 import { serviceUsers } from "@services/users";
 import { Company } from "@shared/company";
@@ -12,24 +11,13 @@ import {
 } from "@shared/express";
 import { MaybeUser, User } from "@shared/user";
 import { selectContext } from "@utils/context";
+import { getCompanyByParam } from "@utils/params";
 import { maskPrivateData } from "@utils/users";
 
 interface StuffIdParams extends RequestFreeParams {
   companyId: string;
   stuffId: string;
 }
-
-const getCompanyByParam = async (author: MaybeUser, param: string) => {
-  const companyId = parseInt(param);
-  if (!companyId) {
-    throw new NotFoundError();
-  }
-  const company = await serviceCompanies.getCompanyById(author, companyId);
-  if (!company) {
-    throw new NotFoundError();
-  }
-  return company;
-};
 
 const getStuffByParam = async (
   author: MaybeUser,
@@ -47,12 +35,20 @@ const getStuffByParam = async (
   return user;
 };
 
+const decodeParams = async (request: express.Request<StuffIdParams>) => {
+  const { author } = selectContext(request);
+  const company = await getCompanyByParam(author, request.params.companyId);
+  return {
+    author,
+    company,
+  };
+};
+
 export const listStuff: express.RequestHandler<StuffIdParams, User[]> = async (
   request,
   response
 ) => {
-  const { author } = selectContext(request);
-  const company = await getCompanyByParam(author, request.params.companyId);
+  const { author, company } = await decodeParams(request);
   const stuff = await serviceStuff.getStuffList(author, company);
   response.status(200).send(stuff.map(maskPrivateData));
 };
@@ -61,8 +57,7 @@ export const getStuff: express.RequestHandler<StuffIdParams, User> = async (
   request,
   response
 ) => {
-  const { author } = selectContext(request);
-  const company = await getCompanyByParam(author, request.params.companyId);
+  const { author, company } = await decodeParams(request);
   const stuff = await getStuffByParam(author, company, request.params.stuffId);
   response.status(200).send(maskPrivateData(stuff));
 };
@@ -72,8 +67,7 @@ export const createStuff: express.RequestHandler<
   User,
   Omit<User, "id">
 > = async (request, response) => {
-  const { author } = selectContext(request);
-  const company = await getCompanyByParam(author, request.params.companyId);
+  const { author, company } = await decodeParams(request);
   const user = await serviceUsers.createCompanyUser(
     author,
     company,
@@ -88,10 +82,9 @@ export const updateStuff: express.RequestHandler<
   User,
   Omit<User, "id">
 > = async (request, response) => {
-  const { author } = selectContext(request);
-  const company = await getCompanyByParam(author, request.params.companyId);
+  const { author, company } = await decodeParams(request);
   const user = await getStuffByParam(author, company, request.params.stuffId);
-  await serviceUsers.updateUser(author, user, request.body);
+  await serviceUsers.updateCompanyUser(author, company, user, request.body);
   response.status(200).send(maskPrivateData(user));
 };
 
@@ -99,8 +92,7 @@ export const deleteStuff: express.RequestHandler<
   StuffIdParams,
   BodyWithStatus
 > = async (request, response) => {
-  const { author } = selectContext(request);
-  const company = await getCompanyByParam(author, request.params.companyId);
+  const { author, company } = await decodeParams(request);
   const user = await getStuffByParam(author, company, request.params.stuffId);
   await serviceStuff.removeStuffFromCompany(author, company, user);
   response.status(200).send(defaultOkResponse);

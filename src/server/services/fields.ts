@@ -41,7 +41,7 @@ const reArrangeFields = async (
   await adapterFields.reArrange(casting, fieldIds);
 };
 
-export const serviceCompanies = {
+export const serviceFields = {
   getFieldsList: checkAuthStuff(getFieldsList),
   getFieldById: checkAuthStuff(getFieldById),
   createField: checkAuthStuff(createField),

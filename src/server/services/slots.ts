@@ -42,7 +42,7 @@ const reArrangeSlots = async (
   await adapterSlots.reArrange(casting, slotIds);
 };
 
-export const serviceCompanies = {
+export const serviceSlots = {
   getSlotsList: checkAuthStuff(getSlotsList),
   getSlotById: checkAuthStuff(getSlotById),
   createSlot: checkAuthStuff(createSlot),

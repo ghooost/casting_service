@@ -39,15 +39,15 @@ interface FillMockDbProps {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const deepCopy = (obj: any) => {
+export const deepCopy = (obj: any) => {
+  let ret = obj;
   if (typeof obj === "object") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ret = {} as Record<string, any>;
+    ret = obj instanceof Array ? [] : {};
     Object.entries(obj).forEach(([key, value]) => {
       ret[key] = deepCopy(value);
     });
   }
-  return obj;
+  return ret;
 };
 
 export const initMockDb = (
@@ -60,6 +60,7 @@ export const initMockDb = (
     const newData = customData
       ? (deepCopy(customData) as typeof data)
       : (deepCopy(data) as typeof data);
+
     newData.companies.map(async (company) => {
       const owners = [] as User[];
       company.owners.forEach((owner) => {

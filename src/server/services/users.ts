@@ -1,10 +1,11 @@
 import { adapterUsers } from "@db/users";
-import { ForbiddenError, NotFoundError, ParamsError } from "@shared/error";
-import { MaybeUser, User } from "@shared/user";
+import { NotFoundError, ParamsError } from "@shared/error";
+import { User } from "@shared/user";
 import {
-  canManageServiceLevel,
   checkAuthAdmin,
   checkAuthOwner,
+  checkAuthSelf,
+  checkAuthSelfWithUser,
 } from "@utils/auth";
 import {
   normalizeBool,
@@ -67,28 +68,15 @@ const deleteUser = async (user: User) => {
   await adapterUsers.remove(user);
 };
 
-const getUserById = async (author: MaybeUser, userId: User["id"]) => {
+const getUserById = async (userId: User["id"]) => {
   const user = await adapterUsers.find(userId);
   if (!user) {
     throw new NotFoundError();
   }
-  if (!(await canManageServiceLevel(author)) && user !== author) {
-    throw new ForbiddenError();
-  }
   return user;
 };
 
-const updateUser = async (
-  author: MaybeUser,
-  user: User,
-  data: Partial<Omit<User, "id">>
-) => {
-  if (!author) {
-    throw new ForbiddenError();
-  }
-  if (!(await canManageServiceLevel(author)) && user !== author) {
-    throw new ForbiddenError();
-  }
+const updateUser = async (user: User, data: Partial<Omit<User, "id">>) => {
   const normData: Record<string, unknown> = {};
   if (data.email) {
     const email = normalizeEmail(data.email);
@@ -109,10 +97,6 @@ const updateUser = async (
       normData.password = password;
     }
   }
-  if (data.isAdmin !== undefined) {
-    const isAdmin = normalizeBool(data.isAdmin);
-    normData.isAdmin = author.isAdmin ? isAdmin : false;
-  }
   return await adapterUsers.update(user.id, normData);
 };
 
@@ -125,10 +109,14 @@ export const serviceUsers = {
   // standart auth
   getUserList: checkAuthAdmin(getUserList),
   createUser: checkAuthAdmin(createUser),
-  createCompanyUser: checkAuthOwner(createUser),
+  updateUser: checkAuthAdmin(updateUser),
   deleteUser: checkAuthAdmin(deleteUser),
+  getUserById: checkAuthAdmin(getUserById),
 
-  // custom auth control
-  getUserById,
-  updateUser,
+  createCompanyUser: checkAuthOwner(createUser),
+  updateCompanyUser: checkAuthOwner(updateUser),
+  getCompanyUserById: checkAuthOwner(getUserById),
+
+  updateSelfUser: checkAuthSelfWithUser(updateUser),
+  getSelfUserById: checkAuthSelf(getUserById),
 };

@@ -7,6 +7,8 @@ import {
   checkAuthAdmin,
   checkAuthOwner,
   checkAuthOwnerWithCompany,
+  checkAuthSelf,
+  checkAuthSelfWithUser,
   checkAuthStuff,
   checkAuthStuffWithCompany,
 } from "./auth";
@@ -183,5 +185,26 @@ describe("utils/auth", () => {
       async () => await newFn(admin, null, testString)
     ).rejects.toThrowError();
     expect(fn).toBeCalledTimes(3);
+  });
+
+  it("checkAuthSelf", async () => {
+    const fn = vi.fn();
+    const newFn = checkAuthSelf(fn);
+    await newFn(admin, admin, testString, testString);
+    expect(fn.mock.lastCall).toMatchObject([testString, testString]);
+    expect(fn.mock.lastCall).not.toMatchObject([admin, testString, testString]);
+  });
+
+  it("checkAuthSelfWithUser", async () => {
+    const fn = vi.fn();
+    const newFn = checkAuthSelfWithUser(fn);
+    await newFn(admin, admin, testString, testString);
+    expect(fn.mock.lastCall).toMatchObject([admin, testString, testString]);
+    expect(fn.mock.lastCall).not.toMatchObject([
+      admin,
+      admin,
+      testString,
+      testString,
+    ]);
   });
 });

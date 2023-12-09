@@ -38,11 +38,11 @@ const reArrangeRoles = async (
   await adapterRoles.reArrange(casting, roleIds);
 };
 
-export const serviceCompanies = {
-  getCastingList: checkAuthStuff(getRolesList),
-  getCastingById: checkAuthStuff(getRoleById),
-  createCasting: checkAuthStuff(createRole),
-  updateCasting: checkAuthStuff(updateRole),
-  deleteCasting: checkAuthStuff(deleteRole),
+export const serviceRoles = {
+  getRolesList: checkAuthStuff(getRolesList),
+  getRoleById: checkAuthStuff(getRoleById),
+  createRole: checkAuthStuff(createRole),
+  updateRole: checkAuthStuff(updateRole),
+  deleteRole: checkAuthStuff(deleteRole),
   reArrangeRoles: checkAuthStuff(reArrangeRoles),
 };

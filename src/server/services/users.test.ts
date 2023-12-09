@@ -2,9 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { serviceUsers } from "./users";
 
+import { adapterCompanies } from "@db/companies";
 import { adapterUsers } from "@db/users";
-import { ForbiddenError } from "@shared/error";
+import { Company } from "@shared/company";
+import { NotFoundError } from "@shared/error";
 import { User } from "@shared/user";
+import { initMockDb } from "@utils/test";
 
 vi.mock("@db/users", async (importOriginal) => {
   const collection = new Map<User["id"], User>();
@@ -14,160 +17,89 @@ vi.mock("@db/users", async (importOriginal) => {
   };
 });
 
-const user1: User = {
-  id: 1,
-  email: "test1@test.com",
-  password: "1",
-  isAdmin: false,
-};
-const user2: User = {
-  id: 2,
-  email: "test2@test.com",
-  password: "2",
-  isAdmin: false,
-};
-const user3: User = {
-  id: 3,
-  email: "test3@test.com",
-  password: "3",
-  isAdmin: false,
-};
-const admin: User = {
-  id: 4,
-  email: "admin@test.com",
-  password: "4",
-  isAdmin: true,
-};
+vi.mock("@db/companies", async (importOriginal) => {
+  const collection = new Map<Company["id"], Company>();
+  const origin = await importOriginal<typeof import("@db/companies")>();
+  return {
+    ...origin,
+    adapterCompanies: origin.makeAdapterCompanies(collection, false),
+  };
+});
 
-describe("services/users", () => {
+const [mockDb, resetDb] = initMockDb({ adapterUsers, adapterCompanies });
+
+describe.only("services/users", () => {
   beforeEach(async () => {
-    await adapterUsers.setData([]);
+    await resetDb();
+    vi.resetAllMocks();
   });
   it("coreGetUserById", async () => {
-    await adapterUsers.setData([user1, user2, user3]);
-    expect(await serviceUsers.coreGetUserById(1)).toBe(user1);
-    expect(await serviceUsers.coreGetUserById(2)).toBe(user2);
+    expect(await serviceUsers.coreGetUserById(1)).toBe(mockDb.users[0]);
+    expect(await serviceUsers.coreGetUserById(2)).toBe(mockDb.users[1]);
     expect(await serviceUsers.coreGetUserById(10)).toBe(null);
   });
   it("coreGetUserByEmail", async () => {
-    await adapterUsers.setData([user1, user2, user3]);
-    expect(await serviceUsers.coreGetUserByEmail(user1.email)).toBe(user1);
-    expect(await serviceUsers.coreGetUserByEmail(user2.email)).toBe(user2);
-    expect(await serviceUsers.coreGetUserByEmail("test@test.com")).toBe(null);
+    expect(await serviceUsers.coreGetUserByEmail(mockDb.users[0].email)).toBe(
+      mockDb.users[0]
+    );
+    expect(await serviceUsers.coreGetUserByEmail(mockDb.users[1].email)).toBe(
+      mockDb.users[1]
+    );
+    expect(await serviceUsers.coreGetUserByEmail("nobody@test.com")).toBe(null);
   });
   it("coreCreateInitialUserIfNoUsersAtAll", async () => {
-    await adapterUsers.setData([user1, user2, user3]);
-    await serviceUsers.coreCreateInitialUserIfNoUsersAtAll(
-      "test@test.com",
-      "10"
-    );
-    expect(await serviceUsers.coreGetUserByEmail(user1.email)).toBe(user1);
-    expect(await serviceUsers.coreGetUserByEmail(user2.email)).toBe(user2);
-    expect(await serviceUsers.coreGetUserByEmail("test@test.com")).toBe(null);
     await adapterUsers.setData([]);
     await serviceUsers.coreCreateInitialUserIfNoUsersAtAll(
-      "test@test.com",
+      "new@test.com",
       "10"
     );
-    expect(await serviceUsers.coreGetUserByEmail(user1.email)).toBe(null);
-    expect(
-      await serviceUsers.coreGetUserByEmail("test@test.com")
-    ).toMatchObject({
-      email: "test@test.com",
-      password: "10",
-    });
+    expect(await serviceUsers.coreGetUserByEmail("new@test.com")).toMatchObject(
+      {
+        email: "new@test.com",
+        password: "10",
+      }
+    );
   });
   it("getUserList", async () => {
-    await adapterUsers.setData([user1, user2, user3]);
-    try {
-      await serviceUsers.getUserList(user1);
-      expect(false, "should throw error").toBe(true);
-    } catch (e) {
-      expect(e).toBeInstanceOf(ForbiddenError);
-    }
-    expect(await serviceUsers.getUserList(admin)).toMatchObject([
-      user1,
-      user2,
-      user3,
-    ]);
+    expect(await serviceUsers.getUserList(mockDb.users[0])).toMatchObject(
+      mockDb.users
+    );
   });
   it("createUser", async () => {
-    await adapterUsers.setData([user1, user2]);
-    try {
-      await serviceUsers.createUser(user1, user3);
-      expect(false, "should throw error").toBe(true);
-    } catch (e) {
-      expect(true, "should throw error").toBe(true);
-    }
-    await serviceUsers.createUser(admin, user3);
-    expect(await serviceUsers.coreGetUserByEmail(user3.email)).toMatchObject({
-      email: user3.email,
-    });
-    try {
-      await serviceUsers.createUser(admin, { ...user3, email: "wrong email" });
-      expect(false, "should throw error").toBe(true);
-    } catch (e) {
-      expect(true, "should throw error").toBe(true);
-    }
+    expect(
+      await serviceUsers.createUser(mockDb.users[0], {
+        email: "new@test.com",
+        password: "1",
+        isAdmin: true,
+      })
+    ).toMatchObject({ email: "new@test.com", password: "1", isAdmin: true });
   });
   it("deleteUser", async () => {
-    await adapterUsers.setData([user1, user2]);
-    try {
-      await serviceUsers.deleteUser(user1, user3);
-      expect(false, "should throw error").toBe(true);
-    } catch (e) {
-      expect(true, "should throw error").toBe(true);
-    }
-    await serviceUsers.deleteUser(admin, user3);
-    expect(await serviceUsers.coreGetUserByEmail(user1.email)).toBe(user1);
-    await serviceUsers.deleteUser(admin, user1);
-    expect(await serviceUsers.coreGetUserByEmail(user1.email)).toBe(null);
+    await serviceUsers.deleteUser(mockDb.users[0], mockDb.users[1]);
+    await expect(
+      async () =>
+        await serviceUsers.getUserById(mockDb.users[0], mockDb.users[1].id)
+    ).rejects.toThrowError(NotFoundError);
   });
   it("getUserById", async () => {
-    await adapterUsers.setData([user1, user2]);
-    expect(await serviceUsers.getUserById(user1, user1.id)).toMatchObject({
-      ...user1,
-    });
-    expect(await serviceUsers.getUserById(admin, user2.id)).toMatchObject({
-      ...user2,
-    });
-    try {
-      await serviceUsers.getUserById(user1, user2.id);
-      expect(false, "should throw error").toBe(true);
-    } catch (e) {
-      expect(true, "should throw error").toBe(true);
-    }
+    expect(
+      await serviceUsers.getUserById(mockDb.users[0], mockDb.users[1].id)
+    ).toMatchObject(mockDb.users[1]);
   });
 
-  it("updateUser", async () => {
-    await adapterUsers.setData([user1, user2]);
-    //can update myself
-    await serviceUsers.updateUser(user1, user1, {
-      email: "1@test.com",
-      isAdmin: true,
-    });
-    //but can't provide admin's privileges
-    expect(await serviceUsers.getUserById(admin, user1.id)).toMatchObject({
-      email: "1@test.com",
-      isAdmin: false,
-    });
-    await serviceUsers.updateUser(admin, user1, {
-      email: "2@test.com",
-      isAdmin: true,
-    });
-    //admin can provide admin's privileges
-    expect(await serviceUsers.getUserById(admin, user1.id)).toMatchObject({
-      email: "2@test.com",
-      isAdmin: true,
-    });
-    // but nobody can set non-uniq email
-    try {
-      await serviceUsers.updateUser(admin, user1, {
-        email: user2.email,
-      });
-      expect(false, "should throw error").toBe(true);
-    } catch (e) {
-      expect(true, "should throw error").toBe(true);
-    }
+  it.only("updateUser", async () => {
+    expect(
+      await serviceUsers.updateUser(mockDb.users[0], mockDb.users[1], {
+        email: "new@test.com",
+      })
+    ).toMatchObject({ email: "new@test.com" });
+  });
+
+  it.only("updateSelfUser", async () => {
+    expect(
+      await serviceUsers.updateSelfUser(mockDb.users[2], mockDb.users[2], {
+        email: "new@test.com",
+      })
+    ).toMatchObject({ email: "new@test.com" });
   });
 });

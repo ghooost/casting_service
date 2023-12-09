@@ -110,23 +110,8 @@ describe("controllers/users integration", async () => {
           )
       ).rejects.toThrowError(ForbiddenError);
     });
-    it("should susseed for own requests", async () => {
-      const request = makeRequest(
-        { userId: mockDb.users[1].id },
-        {},
-        { author: mockDb.users[1], session: null }
-      );
-      await getUser(
-        request as unknown as Parameters<typeof getUser>[0],
-        response as unknown as express.Response,
-        next
-      );
-      expect(response.status).toBeCalledWith(200);
-      expect(response.send.mock.calls[0][0]).toMatchObject(
-        maskPrivateData(mockDb.users[1])
-      );
-    });
   });
+
   describe("createUser", () => {
     it("should work for admin", async () => {
       const request = makeRequest(
@@ -150,7 +135,7 @@ describe("controllers/users integration", async () => {
         isAdmin: false,
       });
     });
-    it.skip("should fail for duplicate email", async () => {
+    it("should fail for duplicate email", async () => {
       const request = makeRequest(
         {},
         {

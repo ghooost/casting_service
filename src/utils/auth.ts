@@ -1,7 +1,7 @@
 import { adapterOwners, adapterStuff } from "@db/companies";
 import { Company, MaybeCompany } from "@shared/company";
 import { ForbiddenError } from "@shared/error";
-import { MaybeUser } from "@shared/user";
+import { MaybeUser, User } from "@shared/user";
 
 /**
  * Checks if the given user has the authority to manage service-level operations.
@@ -190,5 +190,40 @@ export const checkAuthStuffWithCompany = <T extends FuncWithCompanyType>(
       throw new ForbiddenError(forbiddenMessage);
     }
     return await fn(company, ...args.slice(1));
+  };
+};
+
+export const checkAuthSelf = <T extends FuncType>(
+  fn: T,
+  forbiddenMessage?: string
+) => {
+  return (
+    author: MaybeUser,
+    user: MaybeUser,
+    ...args: Parameters<typeof fn>
+  ): ReturnType<typeof fn> => {
+    if (!user || !author || author.id !== user.id) {
+      throw new ForbiddenError(forbiddenMessage);
+    }
+    return fn(...args);
+  };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FuncWithUserType = (user: User, ...args: any[]) => any;
+
+export const checkAuthSelfWithUser = <T extends FuncWithUserType>(
+  fn: T,
+  forbiddenMessage?: string
+) => {
+  return (
+    author: MaybeUser,
+    ...args: Parameters<typeof fn>
+  ): ReturnType<typeof fn> => {
+    const user = args[0];
+    if (!user || !author || author.id !== user.id) {
+      throw new ForbiddenError(forbiddenMessage);
+    }
+    return fn(user, ...args.slice(1));
   };
 };

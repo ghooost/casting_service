@@ -1,7 +1,7 @@
 import express from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getStuff, listStuff } from "./stuff";
+import { createStuff, getStuff, listStuff, updateStuff } from "./stuff";
 
 import { adapterCompanies } from "@db/companies";
 import { adapterUsers } from "@db/users";
@@ -147,13 +147,55 @@ describe("controllers/stuff", () => {
 
   describe("createStuff route", () => {
     it("should create a new stuff", async () => {
-      // Тест createStuff
+      const request = makeRequest(
+        {
+          companyId: mockDb.companies[0].id,
+        },
+        {
+          email: "new@test.com",
+          password: "2",
+          isAdmin: false,
+        },
+        { author: mockDb.users[1], session: null }
+      ) as unknown as Parameters<typeof getStuff>[0];
+
+      await createStuff(request, response as unknown as express.Response, next);
+
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject({
+        email: "new@test.com",
+        password: "*",
+        isAdmin: false,
+      });
     });
   });
 
   describe("updateStuff route", () => {
     it("should update an existing stuff", async () => {
-      // Тест updateStuff
+      const savedUsers = await adapterUsers.filter();
+      const request = makeRequest(
+        {
+          companyId: mockDb.companies[0].id,
+          stuffId: mockDb.companies[0].stuff[0].id,
+        },
+        {
+          email: "new@test.com",
+          password: "2",
+          isAdmin: false,
+        },
+        { author: mockDb.users[1], session: null }
+      ) as unknown as Parameters<typeof getStuff>[0];
+
+      await updateStuff(request, response as unknown as express.Response, next);
+
+      expect(response.status).toBeCalledWith(200);
+      expect(response.send.mock.calls[0][0]).toMatchObject({
+        email: "new@test.com",
+        password: "*",
+        isAdmin: false,
+      });
+      const newUsers = await adapterUsers.filter();
+      expect(newUsers.length).toBe(savedUsers.length);
     });
   });
 

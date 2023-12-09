@@ -27,12 +27,13 @@
       "@components/*": ["src/client/components/*"],
       "@stores/*": ["src/client/stores/*"],
       "@apis/*": ["src/client/apis/*"],
+      "@cliroutes/*": ["src/client/routes/*"],
       /* with server */
       "@middlewares/*": ["src/server/middlewares/*"],
       "@controllers/*": ["src/server/controllers/*"],
       "@services/*": ["src/server/services/*"],
       "@db/*": ["src/server/db/*"],
-      "@routes/*": ["src/server/routes/*"],
+      "@srvroutes/*": ["src/server/routes/*"],
       /* shared */
       "@utils/*": ["src/utils/*"],
       "@shared/*": ["src/shared/*"]

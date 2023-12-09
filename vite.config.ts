@@ -13,12 +13,13 @@ export default defineConfig({
       "@components": path.resolve(__dirname, "src/client/components"),
       "@stores": path.resolve(__dirname, "src/client/stores"),
       "@apis": path.resolve(__dirname, "src/client/apis"),
+      "@cliroutes": path.resolve(__dirname, "src/client/routes"),
       // server
       "@middlewares": path.resolve(__dirname, "src/server/middlewares"),
       "@controllers": path.resolve(__dirname, "src/server/controllers"),
       "@services": path.resolve(__dirname, "src/server/services"),
       "@db": path.resolve(__dirname, "src/server/db"),
-      "@routes": path.resolve(__dirname, "src/server/routes"),
+      "@srvroutes": path.resolve(__dirname, "src/server/routes"),
       // shared
       "@utils": path.resolve(__dirname, "src/utils"),
       "@shared": path.resolve(__dirname, "src/shared"),

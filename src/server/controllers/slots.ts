@@ -32,7 +32,7 @@ const decodeParams = async (request: express.Request<SlotIdParams>) => {
   };
 };
 
-export const SlotList: express.RequestHandler<
+export const slotList: express.RequestHandler<
   SlotIdParams,
   CastingSlot[]
 > = async (request, response) => {

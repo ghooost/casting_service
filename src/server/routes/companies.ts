@@ -1,5 +1,9 @@
 import express from "express";
 
+import { routerCastings } from "./castings";
+import { routerOwners } from "./owners";
+import { routerStuff } from "./stuff";
+
 import * as controllerCompanies from "@controllers/companies";
 
 export const routerCompanies = express.Router();
@@ -9,4 +13,6 @@ routerCompanies.get("/:companyId", controllerCompanies.getCompany);
 routerCompanies.put("/:companyId", controllerCompanies.updateCompany);
 routerCompanies.delete("/:companyId", controllerCompanies.deleteCompany);
 
-routerCompanies.get("/:companyId/owners", controllerCompanies.getCompany);
+routerCompanies.use("/:companyId/casting", routerCastings);
+routerCompanies.use("/:companyId/owner", routerOwners);
+routerCompanies.use("/:companyId/stuff", routerStuff);

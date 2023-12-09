@@ -1,36 +1,21 @@
 import express from "express";
 
 import { serviceSlots } from "@services/slots";
-import { Casting, CastingSlot } from "@shared/casting";
-import { Company } from "@shared/company";
-import { NotFoundError, ProcessingError } from "@shared/error";
+import { CastingSlot } from "@shared/casting";
+import { ProcessingError } from "@shared/error";
 import { BodyWithStatus, RequestFreeParams } from "@shared/express";
-import { MaybeUser } from "@shared/user";
 import { selectContext } from "@utils/context";
-import { getCastingByParam, getCompanyByParam } from "@utils/params";
+import {
+  getCastingByParam,
+  getCompanyByParam,
+  getSlotByParam,
+} from "@utils/params";
 
 interface SlotIdParams extends RequestFreeParams {
   companyId: string;
   castingId: string;
   slotId: string;
 }
-
-export const getSlotByParam = async (
-  author: MaybeUser,
-  company: Company,
-  casting: Casting,
-  param: string
-) => {
-  const slotId = parseInt(param);
-  if (!slotId) {
-    throw new NotFoundError();
-  }
-  const slot = await serviceSlots.getSlotById(author, company, casting, slotId);
-  if (!slot) {
-    throw new NotFoundError();
-  }
-  return slot;
-};
 
 const decodeParams = async (request: express.Request<SlotIdParams>) => {
   const { author } = selectContext(request);
@@ -61,11 +46,11 @@ export const slotGet: express.RequestHandler<
   CastingSlot
 > = async (request, response) => {
   const { author, company, casting } = await decodeParams(request);
-  const slot = await serviceSlots.getSlotById(
+  const slot = await getSlotByParam(
     author,
     company,
     casting,
-    parseInt(request.params.slotId)
+    request.params.castingId
   );
   response.status(200).send(slot);
 };
@@ -91,11 +76,11 @@ export const slotUpdate: express.RequestHandler<
   Omit<CastingSlot, "id">
 > = async (request, response) => {
   const { author, company, casting } = await decodeParams(request);
-  const slot = await serviceSlots.getSlotById(
+  const slot = await getSlotByParam(
     author,
     company,
     casting,
-    parseInt(request.params.slotId)
+    request.params.castingId
   );
 
   const result = await serviceSlots.updateSlot(
@@ -118,11 +103,11 @@ export const slotDelete: express.RequestHandler<
   BodyWithStatus
 > = async (request, response) => {
   const { author, company, casting } = await decodeParams(request);
-  const slot = await serviceSlots.getSlotById(
+  const slot = await getSlotByParam(
     author,
     company,
     casting,
-    parseInt(request.params.SlotId)
+    request.params.castingId
   );
   serviceSlots.deleteSlot(author, company, casting, slot);
   response.sendStatus(200);

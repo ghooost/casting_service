@@ -4,7 +4,6 @@ import {
   makeChildArrayApiLinkable,
 } from "./api";
 
-import { Applicant } from "@shared/applicant";
 import {
   Casting,
   CastingField,
@@ -14,7 +13,7 @@ import {
 import { Company } from "@shared/company";
 
 const collection = new Map<Company["id"], Company>();
-const getDefaultItem = () => ({
+const getDefaultCompany = () => ({
   id: 0,
   title: "",
   owners: [],
@@ -26,7 +25,7 @@ export const makeAdapterCompanies = (
   collection: Map<Company["id"], Company>,
   isLocked: boolean = true,
   initId: number = 0
-) => makeApiForMap(collection, getDefaultItem, isLocked, initId);
+) => makeApiForMap(collection, getDefaultCompany, isLocked, initId);
 
 export const adapterCompanies = makeAdapterCompanies(collection, true, 0);
 
@@ -76,13 +75,5 @@ export const adapterSlots = makeChildArrayApiEditable(
     endAt: 0,
     openAt: 0,
     applicants: [],
-  })
-);
-
-export const adapterApplicants = makeChildArrayApiEditable(
-  (slot: CastingSlot) => slot.applicants,
-  (): Applicant => ({
-    id: 0,
-    data: {},
   })
 );

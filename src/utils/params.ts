@@ -1,5 +1,7 @@
 import { serviceCastings } from "@services/castings";
 import { serviceCompanies } from "@services/companies";
+import { serviceSlots } from "@services/slots";
+import { Casting } from "@shared/casting";
 import { Company } from "@shared/company";
 import { NotFoundError } from "@shared/error";
 import { MaybeUser } from "@shared/user";
@@ -34,4 +36,21 @@ export const getCastingByParam = async (
     throw new NotFoundError();
   }
   return casting;
+};
+
+export const getSlotByParam = async (
+  author: MaybeUser,
+  company: Company,
+  casting: Casting,
+  param: string
+) => {
+  const slotId = parseInt(param);
+  if (!slotId) {
+    throw new NotFoundError();
+  }
+  const slot = await serviceSlots.getSlotById(author, company, casting, slotId);
+  if (!slot) {
+    throw new NotFoundError();
+  }
+  return slot;
 };

@@ -44,12 +44,19 @@ export interface ErrorData {
   description?: string;
 }
 
+export interface ErrorResponse extends ErrorData {
+  status: string;
+}
+
 export const getErrorData = (err: MaybeMessageAndDescription) => {
   const data = ErrorDataByType.find(({ type }) => err instanceof type);
   if (!data) {
     return { code: 500, message: "Unknown Error" };
   }
-  const body: ErrorData = { code: data.code, message: data.message };
+  const body: ErrorData = {
+    code: data.code,
+    message: data.message,
+  };
   if (err.message) {
     body.message = err.message;
   }

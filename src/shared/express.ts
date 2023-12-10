@@ -5,3 +5,4 @@ export type BodyWithStatus = {
 };
 
 export const defaultOkResponse = { status: "ok" };
+export const defaultWrongResponse = { status: "error" };

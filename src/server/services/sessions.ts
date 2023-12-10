@@ -14,10 +14,12 @@ const isValidSession = (session: MaybeSession) => {
   return true;
 };
 
-const getSessionById = async (sessionId: Session["id"] | undefined) => {
-  if (!sessionId) {
+const getSessionById = async (sessionIdRaw: Session["id"] | undefined) => {
+  if (!sessionIdRaw) {
     return null;
   }
+
+  const sessionId = sessionIdRaw.replace(/^Bearer /, "");
   const session = await adapterSessions.find(sessionId);
   if (!session || !isValidSession(session)) {
     return null;

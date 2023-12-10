@@ -4,5 +4,6 @@ import * as controllerAuth from "@controllers/auth";
 
 export const routerAuth = express.Router();
 
-routerAuth.post("/signin", controllerAuth.signIn);
-routerAuth.get("/signout", controllerAuth.signOut);
+routerAuth.post("/in", controllerAuth.signIn);
+routerAuth.get("/out", controllerAuth.signOut);
+routerAuth.get("/check", controllerAuth.checkSession);
